@@ -22,6 +22,9 @@
   </ItemGroup>
   
   <ItemGroup>
+    <ProjectReference Include="..\H.Containers.AppDomain\H.Containers.AppDomain.csproj" />
+    <ProjectReference Include="..\H.Containers.AssemblyLoadContext\H.Containers.AssemblyLoadContext.csproj" />
+    <ProjectReference Include="..\H.Containers.CurrentDomain\H.Containers.CurrentDomain.csproj" />
     <ProjectReference Include="..\H.Containers.Process\H.Containers.Process.csproj" />
   </ItemGroup>
   

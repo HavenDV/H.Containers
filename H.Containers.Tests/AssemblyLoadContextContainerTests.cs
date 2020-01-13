@@ -1,9 +1,5 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Runtime.Loader;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Plugins.Tests.Utilities;
 
 namespace H.Containers.Tests
 {
@@ -11,32 +7,11 @@ namespace H.Containers.Tests
     public class AssemblyLoadContextContainerTests
     {
         [TestMethod]
-        public void LoadTest()
+        public async Task LoadTest()
         {
-            const string name = "H.NET.Core.dll";
-            var bytes = ResourcesUtilities.ReadFileAsBytes(name);
-            var path = Path.Combine(Path.GetTempPath(), $"H.Containers.Tests_{nameof(LoadTest)}_{name}");
+            using var container = new AssemblyLoadContextContainer("Modules");
 
-            File.WriteAllBytes(path, bytes);
-
-            var container = new AssemblyLoadContext("Modules", true);
-
-            container.LoadFromAssemblyPath(path);
-
-            foreach (var type in container.Assemblies.First().GetTypes())
-            {
-                Console.WriteLine($"Type: {type.FullName}");
-            }
-
-            var containerReference = new WeakReference(container, true);
-
-            container.Unload();
-
-            for (var i = 0; containerReference.IsAlive && (i < 10); i++)
-            {
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-            }
+            await BaseTests.LoadTestAsync(container, $"{nameof(AssemblyLoadContextContainerTests)}_{nameof(LoadTest)}");
         }
     }
 }
