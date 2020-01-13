@@ -23,6 +23,10 @@
     <ApplicationFiles Include="..\H.Containers.Process.Application\bin\$(ConfigurationName)\netcoreapp3.1\*.*" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\H.Containers.Core\H.Containers.Core.csproj" />
+  </ItemGroup>
+
   <Target Name="CopyApplication" BeforeTargets="PreBuildEvent">
     <Copy SourceFiles="@(ApplicationFiles)" DestinationFolder="$(OutDir)Application" />
   </Target>

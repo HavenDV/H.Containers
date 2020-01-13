@@ -5,10 +5,12 @@ using H.Pipes;
 
 namespace H.Containers
 {
-    public sealed class ProcessContainer : IDisposable
+    public sealed class ProcessContainer : IContainer
     {
         #region Properties
 
+        public string Name { get; }
+        
         private System.Diagnostics.Process? Process { get; set; }
         private PipeClient<string>? PipeClient { get; set; }
 
@@ -21,6 +23,16 @@ namespace H.Containers
         private void OnExceptionOccurred(Exception exception)
         {
             ExceptionOccurred?.Invoke(this, exception);
+        }
+
+        #endregion
+
+        #region Constructors
+
+        public ProcessContainer(string name)
+        {
+            Name = name ?? throw new ArgumentNullException(nameof(name));
+            Name = (string.IsNullOrWhiteSpace(name) ? null : "") ?? throw new ArgumentException("Name is empty", nameof(name));
         }
 
         #endregion
@@ -41,7 +53,7 @@ namespace H.Containers
             var name = "testtstststs";
             Process = System.Diagnostics.Process.Start(path, name);
             PipeClient = new PipeClient<string>(name);
-            PipeClient.MessageReceived += (sender, args) => OnExceptionOccurred(new Exception(args.Message));
+            //PipeClient.MessageReceived += (sender, args) => OnExceptionOccurred(new Exception(args.Message));
 
             await PipeClient.ConnectAsync(cancellationToken);
         }
@@ -54,6 +66,18 @@ namespace H.Containers
         public async Task CreateObjectAsync(string typeName, CancellationToken cancellationToken = default)
         {
             await PipeClient.WriteAsync($"create_object {typeName}", cancellationToken);
+        }
+
+        public Task<Type[]> GetTypesAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new Type[0]);
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken = default)
+        {
+            Process.Kill();
+
+            return Task.CompletedTask;
         }
 
         #endregion
