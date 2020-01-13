@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using H.Pipes;
 
-namespace H.Containers.Process.Application
+namespace H.Containers
 {
     internal static class Program
     {

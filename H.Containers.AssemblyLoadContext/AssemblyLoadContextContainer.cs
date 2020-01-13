@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace H.Containers.AssemblyLoadContext
+namespace H.Containers
 {
     public class AssemblyLoadContextContainer : IDisposable
     {

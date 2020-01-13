@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using H.Pipes;
 
-namespace H.Containers.Process
+namespace H.Containers
 {
     public sealed class ProcessContainer : IDisposable
     {

@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace H.Containers.AppDomain
+namespace H.Containers
 {
     public class AppDomainContainer : IDisposable
     {

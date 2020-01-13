@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace H.Containers.CurrentDomain
+namespace H.Containers
 {
     public sealed class CurrentDomainContainer : IDisposable
     {

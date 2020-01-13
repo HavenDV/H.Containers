@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace H.Containers.Process.Application
+namespace H.Containers
 {
     public sealed class Container : IDisposable
     {
