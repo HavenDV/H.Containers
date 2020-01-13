@@ -10,4 +10,12 @@
     <PackageReference Include="H.Pipes" Version="1.0.7" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ApplicationFiles Include="..\H.Containers.Process.Application\bin\$(ConfigurationName)\netcoreapp3.1\*.*"/>
+  </ItemGroup>
+
+  <Target Name="CopyApplication" BeforeTargets="PreBuildEvent">
+    <Copy SourceFiles="@(ApplicationFiles)" DestinationFolder="$(OutDir)Application"/>
+  </Target>
+
 </Project>

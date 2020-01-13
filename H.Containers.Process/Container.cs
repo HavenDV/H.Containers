@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace H.Containers.Process
 {
-    public sealed class Container : IDisposable
+    public sealed class ProcessContainer : IDisposable
     {
         #region Properties
 
