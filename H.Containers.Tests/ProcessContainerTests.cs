@@ -5,14 +5,14 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace H.Containers.Tests
 {
     [TestClass]
-    public class DataTests
+    public class ProcessContainerTests
     {
         [TestMethod]
         public async Task StartTest()
         {
             var receivedException = (Exception?) null;
 
-            using var container = new ProcessContainer();
+            using var container = new ProcessContainer("StartTest");
             container.ExceptionOccurred += (sender, exception) => receivedException = exception;
 
             await container.ClearAsync();
@@ -21,7 +21,7 @@ namespace H.Containers.Tests
 
             await container.LoadAssemblyAsync("test");
 
-            for (var i = 0; i < 1000; i++)
+            for (var i = 0; i < 100; i++)
             {
                 await Task.Delay(TimeSpan.FromMilliseconds(1));
 
