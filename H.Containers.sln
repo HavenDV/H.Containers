@@ -10,7 +10,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.Containers.Process", "H.C
 		{018917DA-7D44-4134-B875-A72E3E152DA1} = {018917DA-7D44-4134-B875-A72E3E152DA1}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.Container.Tests", "H.Container.Tests\H.Container.Tests.csproj", "{415C6C0B-DA2B-4764-96A6-E9FB78918622}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.Containers.Tests", "H.Containers.Tests\H.Containers.Tests.csproj", "{415C6C0B-DA2B-4764-96A6-E9FB78918622}"
 	ProjectSection(ProjectDependencies) = postProject
 		{018917DA-7D44-4134-B875-A72E3E152DA1} = {018917DA-7D44-4134-B875-A72E3E152DA1}
 	EndProjectSection
