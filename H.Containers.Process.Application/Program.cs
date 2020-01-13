@@ -22,8 +22,9 @@ namespace H.Containers.Process.Application
             var prefix = arguments.ElementAt(0);
 
             await using var server = new PipeServer<string>(prefix);
-            server.MessageReceived += (sender, args) =>
+            server.MessageReceived += async (sender, args) =>
             {
+                await args.Connection.WriteAsync("hello12");
                 OnMessageReceived(args.Message);
             };
             server.ExceptionOccurred += (sender, args) =>
@@ -47,18 +48,21 @@ namespace H.Containers.Process.Application
 
         private static void OnMessageReceived(string message)
         {
-            switch (message)
+            var prefix = message.Split(' ').First();
+            var postfix = message.Replace(prefix, string.Empty);
+
+            switch (prefix)
             {
                 case "stop":
                     IsStopped = true;
                     break;
 
                 case "load_assembly":
-                    Container.LoadAssembly(message);
+                    Container.LoadAssembly(postfix);
                     break;
 
                 case "create_object":
-                    Container.CreateObject(message);
+                    Container.CreateObject(postfix);
                     break;
 
             }

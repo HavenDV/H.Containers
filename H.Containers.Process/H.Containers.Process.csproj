@@ -11,11 +11,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ApplicationFiles Include="..\H.Containers.Process.Application\bin\$(ConfigurationName)\netcoreapp3.1\*.*"/>
+    <None Remove="$(OutDir)Application\*.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(OutDir)Application\*.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ApplicationFiles Include="..\H.Containers.Process.Application\bin\$(ConfigurationName)\netcoreapp3.1\*.*" />
   </ItemGroup>
 
   <Target Name="CopyApplication" BeforeTargets="PreBuildEvent">
-    <Copy SourceFiles="@(ApplicationFiles)" DestinationFolder="$(OutDir)Application"/>
+    <Copy SourceFiles="@(ApplicationFiles)" DestinationFolder="$(OutDir)Application" />
   </Target>
 
 </Project>
