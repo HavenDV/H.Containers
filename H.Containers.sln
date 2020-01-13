@@ -21,6 +21,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.Containers.AssemblyLoadCo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.Containers.CurrentDomain", "H.Containers.CurrentDomain\H.Containers.CurrentDomain.csproj", "{1BC563D8-C2A1-44FC-8F28-40936A75A258}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.Containers.Core", "H.Containers.Core\H.Containers.Core.csproj", "{12F12A93-BB63-4AA9-A334-B0CBEAD1F8B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{1BC563D8-C2A1-44FC-8F28-40936A75A258}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1BC563D8-C2A1-44FC-8F28-40936A75A258}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1BC563D8-C2A1-44FC-8F28-40936A75A258}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12F12A93-BB63-4AA9-A334-B0CBEAD1F8B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12F12A93-BB63-4AA9-A334-B0CBEAD1F8B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12F12A93-BB63-4AA9-A334-B0CBEAD1F8B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12F12A93-BB63-4AA9-A334-B0CBEAD1F8B5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
