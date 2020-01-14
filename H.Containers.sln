@@ -21,7 +21,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.Containers.AssemblyLoadCo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.Containers.CurrentDomain", "H.Containers.CurrentDomain\H.Containers.CurrentDomain.csproj", "{1BC563D8-C2A1-44FC-8F28-40936A75A258}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.Containers.Core", "H.Containers.Core\H.Containers.Core.csproj", "{12F12A93-BB63-4AA9-A334-B0CBEAD1F8B5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.Containers", "H.Containers\H.Containers.csproj", "{12F12A93-BB63-4AA9-A334-B0CBEAD1F8B5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{734FEE5A-7F81-48B3-AA79-71E5EF0EC26A}"
+	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		.github\workflows\dotnetcore.yml = .github\workflows\dotnetcore.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

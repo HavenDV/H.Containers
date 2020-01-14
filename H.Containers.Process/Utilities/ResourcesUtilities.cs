@@ -5,7 +5,7 @@ using System.Reflection;
 
 #nullable enable
 
-namespace H.Containers.Process.Utilities
+namespace H.Containers.Utilities
 {
     internal static class ResourcesUtilities
     {

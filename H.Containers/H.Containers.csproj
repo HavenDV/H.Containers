@@ -5,7 +5,6 @@
     <LangVersion>8</LangVersion>
     <Nullable>enable</Nullable>
     <Version>0.1.0</Version>
-    <RootNamespace>H.Containers</RootNamespace>
     <Description>DO NOT USE THIS</Description>
     <Authors>havendv</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -19,9 +18,5 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\H.Containers\H.Containers.csproj" />
-  </ItemGroup>
 
 </Project>

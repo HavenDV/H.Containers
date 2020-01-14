@@ -60,11 +60,15 @@ namespace H.Containers
 
         public async Task LoadAssemblyAsync(string path, CancellationToken cancellationToken = default)
         {
+            PipeClient = PipeClient ?? throw new InvalidOperationException("Container is not started");
+
             await PipeClient.WriteAsync($"load_assembly {path}", cancellationToken);
         }
 
         public async Task CreateObjectAsync(string typeName, CancellationToken cancellationToken = default)
         {
+            PipeClient = PipeClient ?? throw new InvalidOperationException("Container is not started");
+
             await PipeClient.WriteAsync($"create_object {typeName}", cancellationToken);
         }
 
@@ -75,6 +79,8 @@ namespace H.Containers
 
         public Task StopAsync(CancellationToken cancellationToken = default)
         {
+            Process = Process ?? throw new InvalidOperationException("Container is not started");
+
             Process.Kill();
 
             return Task.CompletedTask;
@@ -86,7 +92,7 @@ namespace H.Containers
 
         public void Dispose()
         {
-            PipeClient.Dispose();
+            PipeClient?.Dispose();
             Process?.Dispose();
         }
 

@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\H.Containers\H.Containers.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="H.Pipes" Version="1.0.7" />
   </ItemGroup>
 
@@ -21,10 +25,6 @@
 
   <ItemGroup>
     <ApplicationFiles Include="..\H.Containers.Process.Application\bin\$(ConfigurationName)\netcoreapp3.1\*.*" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\H.Containers.Core\H.Containers.Core.csproj" />
   </ItemGroup>
 
   <Target Name="CopyApplication" BeforeTargets="PreBuildEvent">
