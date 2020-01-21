@@ -8,12 +8,11 @@ namespace H.Containers.Tests
     public class ProcessContainerTests
     {
         [TestMethod]
-        public void StartTest()
+        public async Task StartTest()
         {
-            /*
             var receivedException = (Exception?) null;
 
-            using var container = new ProcessContainer("StartTest");
+            await using var container = new ProcessContainer(nameof(ProcessContainerTests));
             container.ExceptionOccurred += (sender, exception) => receivedException = exception;
 
             await container.ClearAsync();
@@ -30,7 +29,7 @@ namespace H.Containers.Tests
                 {
                     Assert.Fail(receivedException.ToString());
                 }
-            }*/
+            }
         }
     }
 }

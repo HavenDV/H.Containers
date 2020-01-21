@@ -5,7 +5,7 @@ using H.Pipes;
 
 namespace H.Containers
 {
-    public sealed class ProcessContainer : IContainer
+    public sealed class ProcessContainer : IContainer, IAsyncDisposable
     {
         #region Properties
 
@@ -50,26 +50,26 @@ namespace H.Containers
         {
             var path = Application.GetPathAndUnpackIfRequired();
 
-            var name = "testtstststs";
+            var name = $"{Name}_Pipe";
             Process = System.Diagnostics.Process.Start(path, name);
             PipeClient = new PipeClient<string>(name);
-            //PipeClient.MessageReceived += (sender, args) => OnExceptionOccurred(new Exception(args.Message));
+            PipeClient.MessageReceived += (sender, args) => OnExceptionOccurred(new Exception(args.Message));
 
-            await PipeClient.ConnectAsync(cancellationToken);
+            await PipeClient.ConnectAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public async Task LoadAssemblyAsync(string path, CancellationToken cancellationToken = default)
         {
             PipeClient = PipeClient ?? throw new InvalidOperationException("Container is not started");
 
-            await PipeClient.WriteAsync($"load_assembly {path}", cancellationToken);
+            await PipeClient.WriteAsync($"load_assembly {path}", cancellationToken).ConfigureAwait(false);
         }
 
         public async Task CreateObjectAsync(string typeName, CancellationToken cancellationToken = default)
         {
             PipeClient = PipeClient ?? throw new InvalidOperationException("Container is not started");
 
-            await PipeClient.WriteAsync($"create_object {typeName}", cancellationToken);
+            await PipeClient.WriteAsync($"create_object {typeName}", cancellationToken).ConfigureAwait(false);
         }
 
         public Task<Type[]> GetTypesAsync(CancellationToken cancellationToken = default)
@@ -77,13 +77,60 @@ namespace H.Containers
             return Task.FromResult(new Type[0]);
         }
 
-        public Task StopAsync(CancellationToken cancellationToken = default)
+        /// <summary>
+        /// It will try to wait for the correct completion of the process with the specified timeout.
+        /// When canceled with a token, it will kill the process and correctly clear resources.
+        /// Default timeout = 1 second
+        /// </summary>
+        /// <param name="timeout"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task StopAsync(TimeSpan? timeout = default, CancellationToken cancellationToken = default)
         {
-            Process = Process ?? throw new InvalidOperationException("Container is not started");
+            if (Process == null)
+            {
+                return;
+            }
+            
+            try
+            {
+                timeout ??= TimeSpan.FromSeconds(1);
 
-            Process.Kill();
+                if (PipeClient == null)
+                {
+                    Process.Kill();
+                    return;
+                }
 
-            return Task.CompletedTask;
+                if (!Process.HasExited)
+                {
+                    await PipeClient.WriteAsync("stop", cancellationToken).ConfigureAwait(false);
+                }
+
+                using var cancellationTokenSource = new CancellationTokenSource(timeout.Value);
+
+                while (!Process.HasExited)
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(1), cancellationTokenSource.Token).ConfigureAwait(false);
+
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+
+                Process.Dispose();
+                Process = null;
+            }
+            catch (OperationCanceledException)
+            {
+                Process?.Kill();
+            }
+            finally
+            {
+                PipeClient?.Dispose();
+                PipeClient = null;
+
+                Process?.Dispose();
+                Process = null;
+            }
         }
 
         #endregion
@@ -92,8 +139,12 @@ namespace H.Containers
 
         public void Dispose()
         {
-            PipeClient?.Dispose();
-            Process?.Dispose();
+            StopAsync().Wait();
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await StopAsync();
         }
 
         #endregion

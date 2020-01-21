@@ -1,6 +1,6 @@
 using System;
-using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using H.Pipes;
 
@@ -10,6 +10,17 @@ namespace H.Containers
     {
         private static bool IsStopped { get; set; }
         private static Container Container { get; } = new Container();
+        private static PipeServer<string>? PipeServer { get; set; }
+
+        private static async Task OnExceptionOccurredAsync(Exception exception, CancellationToken cancellationToken = default)
+        {
+            if (PipeServer == null)
+            {
+                return;
+            }
+
+            await PipeServer.WriteAsync(exception.Message, predicate: null, cancellationToken);
+        }
 
         [MTAThread]
         private static async Task Main(string[] arguments)
@@ -21,17 +32,17 @@ namespace H.Containers
 
             var prefix = arguments.ElementAt(0);
 
-            await using var server = new PipeServer<string>(prefix);
+            PipeServer = new PipeServer<string>(prefix);
+            await using var server = PipeServer;
             server.MessageReceived += async (sender, args) =>
             {
-                await args.Connection.WriteAsync("hello12");
-                OnMessageReceived(args.Message);
+                await OnMessageReceivedAsync(args.Message);
             };
             server.ExceptionOccurred += (sender, args) =>
             {
-                Trace.WriteLine($"Exception: {args.Exception}");
+                Console.Error.WriteLine($"Server Exception: {args.Exception}");
             };
-            await server.StartAsync(false);
+            await server.StartAsync();
 
             try
             {
@@ -46,25 +57,31 @@ namespace H.Containers
             }
         }
 
-        private static void OnMessageReceived(string message)
+        private static async Task OnMessageReceivedAsync(string message, CancellationToken cancellationToken = default)
         {
-            var prefix = message.Split(' ').First();
-            var postfix = message.Replace(prefix, string.Empty);
-
-            switch (prefix)
+            try
             {
-                case "stop":
-                    IsStopped = true;
-                    break;
+                var prefix = message.Split(' ').First();
+                var postfix = message.Replace(prefix, string.Empty);
 
-                case "load_assembly":
-                    Container.LoadAssembly(postfix);
-                    break;
+                switch (prefix)
+                {
+                    case "stop":
+                        IsStopped = true;
+                        break;
 
-                case "create_object":
-                    Container.CreateObject(postfix);
-                    break;
+                    case "load_assembly":
+                        Container.LoadAssembly(postfix);
+                        break;
 
+                    case "create_object":
+                        Container.CreateObject(postfix);
+                        break;
+                }
+            }
+            catch (Exception exception)
+            {
+                await OnExceptionOccurredAsync(exception, cancellationToken);
             }
         }
     }
