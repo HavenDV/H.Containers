@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -11,20 +12,26 @@ namespace H.Containers.Tests
         public async Task StartTest()
         {
             var receivedException = (Exception?) null;
-
+            using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             await using var container = new ProcessContainer(nameof(ProcessContainerTests));
-            container.ExceptionOccurred += (sender, exception) => receivedException = exception;
-
-            await container.ClearAsync();
-
-            await container.StartAsync();
-
-            await container.LoadAssemblyAsync("test");
-
-            for (var i = 0; i < 100; i++)
+            container.ExceptionOccurred += (sender, exception) =>
             {
-                await Task.Delay(TimeSpan.FromMilliseconds(1));
+                receivedException = exception;
 
+                // ReSharper disable once AccessToDisposedClosure
+                cancellationTokenSource.Cancel();
+            };
+
+            await container.ClearAsync(cancellationTokenSource.Token);
+            await container.StartAsync(cancellationTokenSource.Token);
+            await container.LoadAssemblyAsync("test", cancellationTokenSource.Token);
+
+            try
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, cancellationTokenSource.Token);
+            }
+            catch (OperationCanceledException)
+            {
                 if (receivedException != null)
                 {
                     Assert.Fail(receivedException.ToString());
