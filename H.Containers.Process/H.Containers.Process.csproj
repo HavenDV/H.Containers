@@ -5,6 +5,7 @@
     <LangVersion>8</LangVersion>
     <Nullable>enable</Nullable>
     <RootNamespace>H.Containers</RootNamespace>
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
   </PropertyGroup>
 
   <ItemGroup>
