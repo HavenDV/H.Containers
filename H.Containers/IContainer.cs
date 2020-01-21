@@ -47,13 +47,14 @@ namespace H.Containers
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         Task<Type[]> GetTypesAsync(CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="timeout"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task StopAsync(CancellationToken cancellationToken = default);
+        Task StopAsync(TimeSpan? timeout = default, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 

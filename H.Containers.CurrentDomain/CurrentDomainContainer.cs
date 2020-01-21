@@ -96,9 +96,10 @@ namespace H.Containers
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="timeout"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public Task StopAsync(CancellationToken cancellationToken = default)
+        public Task StopAsync(TimeSpan? timeout = default, CancellationToken cancellationToken = default)
         {
             return Task.CompletedTask;
         }

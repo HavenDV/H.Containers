@@ -25,7 +25,7 @@ namespace H.Containers.Tests
                 Console.WriteLine($"Type: {type.FullName}");
             }
 
-            await container.StopAsync(cancellationToken);
+            await container.StopAsync(cancellationToken: cancellationToken);
 
             container.Dispose();
         }

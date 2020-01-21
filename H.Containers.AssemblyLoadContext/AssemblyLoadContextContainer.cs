@@ -67,7 +67,7 @@ namespace H.Containers
             return Task.FromResult(types);
         }
 
-        public Task StopAsync(CancellationToken cancellationToken = default)
+        public Task StopAsync(TimeSpan? timeout = default, CancellationToken cancellationToken = default)
         {
             AssemblyLoadContext = AssemblyLoadContext ?? throw new InvalidOperationException("Container is not started");
 
