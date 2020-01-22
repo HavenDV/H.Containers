@@ -24,11 +24,14 @@
     <EmbeddedResource Include="$(OutDir)Application\*.*" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ApplicationFiles Include="..\H.Containers.Process.Application\bin\$(ConfigurationName)\netcoreapp3.1\*.*" />
-  </ItemGroup>
-
   <Target Name="CopyApplication" BeforeTargets="PreBuildEvent">
+    <RemoveDir Directories="$(OutDir)Application" />
+    <MSBuild Projects="$(SolutionDir)\H.Containers.Process.Application\H.Containers.Process.Application.csproj" 
+             Targets="CreateReleaseZip"
+             Properties="TargetFramework=netcoreapp3.1"/>
+    <ItemGroup>
+      <ApplicationFiles Include="..\H.Containers.Process.Application\bin\*.zip" />
+    </ItemGroup>
     <Copy SourceFiles="@(ApplicationFiles)" DestinationFolder="$(OutDir)Application" />
   </Target>
 

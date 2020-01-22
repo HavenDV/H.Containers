@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using H.Containers.Utilities;
 
@@ -30,28 +31,21 @@ namespace H.Containers
 
         private static void Unpack()
         {
-            var names = ResourcesUtilities.GetResourcesNames().Select(GetName).ToList();
-            var files = names.Select(name => ResourcesUtilities.ReadFileAsBytes(name)).ToList();
+            var names = ResourcesUtilities.GetResourcesNames().ToList();
+            var firstName = names.First();
+            var zipBytes = ResourcesUtilities.ReadFileAsBytes(firstName);
 
-            foreach (var (name, bytes) in names.Zip(files, (a, b) => (a, b)))
+            var zipPath = Path.Combine(ApplicationPath, firstName);
+            File.WriteAllBytes(zipPath, zipBytes);
+
+            try
             {
-                var path = Path.Combine(ApplicationPath, name);
-
-                File.WriteAllBytes(path, bytes);
+                ZipFile.ExtractToDirectory(zipPath, ApplicationPath);
             }
-        }
-
-        private static string GetName(string resourceName)
-        {
-            const string phrase = "Application.";
-
-            var index = resourceName.IndexOf(phrase, StringComparison.Ordinal);
-            if (index < 0)
+            finally
             {
-                throw new ArgumentException($"Invalid resourceName: {resourceName}");
+                File.Delete(zipPath);
             }
-
-            return resourceName.Substring(index + phrase.Length);
         }
     }
 }

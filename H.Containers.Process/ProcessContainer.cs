@@ -10,7 +10,8 @@ namespace H.Containers
         #region Properties
 
         public string Name { get; }
-        
+        public bool ForceUpdateApplication { get; set; }
+
         private System.Diagnostics.Process? Process { get; set; }
         private PipeClient<string>? PipeClient { get; set; }
 
@@ -39,9 +40,14 @@ namespace H.Containers
 
         #region Public methods
 
-        public Task ClearAsync(CancellationToken cancellationToken = default)
+        public Task InitializeAsync(CancellationToken cancellationToken = default)
         {
-            Application.Clear();
+            if (ForceUpdateApplication)
+            {
+                Application.Clear();
+            }
+
+            Application.GetPathAndUnpackIfRequired();
 
             return Task.CompletedTask;
         }

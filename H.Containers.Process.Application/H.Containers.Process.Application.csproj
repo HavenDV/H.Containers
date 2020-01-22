@@ -12,4 +12,14 @@
     <PackageReference Include="H.Pipes" Version="1.0.9" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ZipFiles Include="$(ProjectDir)bin\*.zip" />
+  </ItemGroup>
+
+  <Target Name="CreateReleaseZip" AfterTargets="AfterBuild">
+    <Delete Files="@(ZipFiles)" />
+    <ZipDirectory SourceDirectory="$(OutDir)" DestinationFile="$(ProjectDir)bin\$(TargetFramework)_$(ConfigurationName).zip" Overwrite="True" />
+    <Message Importance="High" Text="Release zip is created" />
+  </Target>
+
 </Project>

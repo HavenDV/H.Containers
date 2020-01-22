@@ -13,7 +13,10 @@ namespace H.Containers.Tests
         {
             var receivedException = (Exception?) null;
             using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(1));
-            await using var container = new ProcessContainer(nameof(ProcessContainerTests));
+            await using var container = new ProcessContainer(nameof(ProcessContainerTests))
+            {
+                ForceUpdateApplication = true,
+            };
             container.ExceptionOccurred += (sender, exception) =>
             {
                 receivedException = exception;
@@ -22,7 +25,7 @@ namespace H.Containers.Tests
                 cancellationTokenSource.Cancel();
             };
 
-            await container.ClearAsync(cancellationTokenSource.Token);
+            await container.InitializeAsync(cancellationTokenSource.Token);
             await container.StartAsync(cancellationTokenSource.Token);
             //await container.LoadAssemblyAsync("test", cancellationTokenSource.Token);
 
