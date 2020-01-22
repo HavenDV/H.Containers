@@ -12,7 +12,7 @@ namespace H.Containers.Tests
         public async Task StartTest()
         {
             var receivedException = (Exception?) null;
-            using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(1));
             await using var container = new ProcessContainer(nameof(ProcessContainerTests));
             container.ExceptionOccurred += (sender, exception) =>
             {
@@ -24,7 +24,11 @@ namespace H.Containers.Tests
 
             await container.ClearAsync(cancellationTokenSource.Token);
             await container.StartAsync(cancellationTokenSource.Token);
-            await container.LoadAssemblyAsync("test", cancellationTokenSource.Token);
+            //await container.LoadAssemblyAsync("test", cancellationTokenSource.Token);
+
+            var test = await container.CreateObjectAsync<ITest>("Test", cancellationTokenSource.Token);
+
+            //test.Test();
 
             try
             {
@@ -37,6 +41,11 @@ namespace H.Containers.Tests
                     Assert.Fail(receivedException.ToString());
                 }
             }
+        }
+
+        public interface ITest
+        {
+            public void Test();
         }
     }
 }

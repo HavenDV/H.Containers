@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;</TargetFrameworks>
+    <TargetFrameworks>net472;</TargetFrameworks>
     <LangVersion>8</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -15,6 +15,7 @@
   </ItemGroup>
   
   <ItemGroup>
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="1.1.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="1.4.0" />
     <PackageReference Include="MSTest.TestFramework" Version="1.4.0" />
@@ -23,7 +24,6 @@
   
   <ItemGroup>
     <ProjectReference Include="..\H.Containers.AppDomain\H.Containers.AppDomain.csproj" />
-    <ProjectReference Include="..\H.Containers.AssemblyLoadContext\H.Containers.AssemblyLoadContext.csproj" />
     <ProjectReference Include="..\H.Containers.CurrentDomain\H.Containers.CurrentDomain.csproj" />
     <ProjectReference Include="..\H.Containers.Process\H.Containers.Process.csproj" />
   </ItemGroup>
