@@ -31,7 +31,7 @@ namespace H.Containers.Tests
 
             var test = await container.CreateObjectAsync<ITest>("Test", cancellationTokenSource.Token);
 
-            //test.Test();
+            test.Test();
 
             try
             {
@@ -48,7 +48,7 @@ namespace H.Containers.Tests
 
         public interface ITest
         {
-            public void Test();
+            void Test();
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -7,58 +6,43 @@ namespace H.Containers
 {
     public static class TypeFactory
     {
-        public class Test2
-        {
-            public void Test()
-            {
-                Console.WriteLine("hello");
-            }
-        }
-
-        public static Type Create()
+        public static Type Create(Type interfaceType)
         {
             var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(
                 new AssemblyName(Guid.NewGuid().ToString()),
                 AssemblyBuilderAccess.RunAndCollect);
             var moduleBuilder = assemblyBuilder.DefineDynamicModule("MyModule");
-            var typeBuilder = moduleBuilder.DefineType("MyType");
+            var typeBuilder = moduleBuilder.DefineType("MyType", TypeAttributes.Public);
             var methodBuilder = typeBuilder.DefineMethod("Test",
-                                    MethodAttributes.Public | MethodAttributes.Static,
+                                    MethodAttributes.Public | 
+                                    MethodAttributes.HideBySig |
+                                    MethodAttributes.Final |
+                                    MethodAttributes.Virtual |
+                                    MethodAttributes.NewSlot, // | MethodAttributes.Static
                                     typeof(void),
                                     new Type[] {});
+            typeBuilder.AddInterfaceImplementation(interfaceType);
 
-            var methodImplementation = typeof(Test2).GetMethod("Test") ?? throw new InvalidOperationException("methodImplementation is null");
-            var body = methodImplementation.GetMethodBody() ?? throw new InvalidOperationException("GetMethodBody is null");
+            var method = typeof(TypeFactory).GetMethod("Hello") ?? throw new InvalidOperationException("Method is null");
+            var generator = methodBuilder.GetILGenerator();
+            //generator.Emit(OpCodes.Ldstr, "Hello, World!");
+            generator.EmitCall(OpCodes.Call, method, new Type []{ });
+            generator.Emit(OpCodes.Ret);
 
-            var il = body.GetILAsByteArray();
-
-            Expression<Action> expression = () => Console.WriteLine("hello");
-            expression.CompileToMethod(methodBuilder);
-             
-            var codes = new byte[] {
-                0x02,   /* 02h is the opcode for ldarg.0 */
-                0x03,   /* 03h is the opcode for ldarg.1 */
-                0x58,   /* 58h is the opcode for add     */
-                0x2A    /* 2Ah is the opcode for ret     */
-            };
-
-            //methodBuilder.CreateMethodBody(il, il.Length);
-
-            return typeBuilder.CreateType();
+            return typeBuilder.CreateType() ?? throw new InvalidOperationException("Created type is null");
         }
 
-        public static object CreateInstance()
+        public static void Hello()
         {
-            var type = Create();
+            Console.WriteLine("Hello, bad man");
+        }
 
-            var instance = Activator.CreateInstance(type, new object[0]); 
-            var value = type.InvokeMember("Test",
-                BindingFlags.InvokeMethod,
-                null,
-                instance,
-                new object[] {});
+        public static object CreateInstance(Type interfaceType)
+        {
+            var type = Create(interfaceType);
 
-            return instance;
+            return Activator.CreateInstance(type, new object[0])
+                   ?? throw new InvalidOperationException("Created instance is null");
         }
     }
 }
