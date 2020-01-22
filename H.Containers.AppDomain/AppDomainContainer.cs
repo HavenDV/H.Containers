@@ -79,9 +79,12 @@ namespace H.Containers
             return Task.CompletedTask;
         }
 
-        public Task CreateObjectAsync(string typeName, CancellationToken cancellationToken = default)
+        public Task<T> CreateObjectAsync<T>(string typeName, CancellationToken cancellationToken = default)
+            where T : class
         {
-            return Task.CompletedTask;
+            Assembly = Assembly ?? throw new InvalidOperationException("Assembly is not loaded");
+
+            return Task.FromResult((T)Assembly.CreateInstance(typeName));
         }
 
         #endregion

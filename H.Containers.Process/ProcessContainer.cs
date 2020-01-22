@@ -65,11 +65,14 @@ namespace H.Containers
             await PipeClient.WriteAsync($"load_assembly {path}", cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task CreateObjectAsync(string typeName, CancellationToken cancellationToken = default)
+        public async Task<T> CreateObjectAsync<T>(string typeName, CancellationToken cancellationToken = default) 
+            where T : class
         {
             PipeClient = PipeClient ?? throw new InvalidOperationException("Container is not started");
 
-            await PipeClient.WriteAsync($"create_object {typeName}", cancellationToken).ConfigureAwait(false);
+            //await PipeClient.WriteAsync($"create_object {typeof(T).Name}", cancellationToken).ConfigureAwait(false);
+
+            return ProxyFactory.Create<T>();
         }
 
         public Task<Type[]> GetTypesAsync(CancellationToken cancellationToken = default)

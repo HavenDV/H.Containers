@@ -62,7 +62,8 @@ namespace H.Containers
         /// <param name="typeName"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task CreateObjectAsync(string typeName, CancellationToken cancellationToken = default);
+        Task<T> CreateObjectAsync<T>(string typeName, CancellationToken cancellationToken = default)
+            where T : class;
 
         #endregion
     }

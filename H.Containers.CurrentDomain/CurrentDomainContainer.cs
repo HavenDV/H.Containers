@@ -110,9 +110,15 @@ namespace H.Containers
         /// <param name="typeName"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public Task CreateObjectAsync(string typeName, CancellationToken cancellationToken = default)
+        public Task<T> CreateObjectAsync<T>(string typeName, CancellationToken cancellationToken = default)
+            where T : class
         {
-            return Task.CompletedTask;
+            Assembly = Assembly ?? throw new InvalidOperationException("Assembly is not loaded");
+
+            var obj = Assembly.CreateInstance(typeName) as T
+                      ?? throw new InvalidOperationException("Object is null");
+
+            return Task.FromResult(obj);
         }
 
         #endregion
