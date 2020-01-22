@@ -58,6 +58,7 @@ namespace H.Containers
 
             var name = $"{Name}_Pipe";
             Process = System.Diagnostics.Process.Start(path, name);
+
             PipeClient = new PipeClient<string>(name);
             PipeClient.MessageReceived += (sender, args) => OnExceptionOccurred(new Exception(args.Message));
 

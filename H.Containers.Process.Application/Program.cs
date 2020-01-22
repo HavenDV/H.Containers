@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,6 +26,7 @@ namespace H.Containers
         [MTAThread]
         private static async Task Main(string[] arguments)
         {
+            var parent = Process.GetCurrentProcess().GetParent();
             if (arguments.Length < 1)
             {
                 return;
@@ -46,7 +48,7 @@ namespace H.Containers
 
             try
             {
-                while (!IsStopped)
+                while (!IsStopped && (parent == null || !parent.HasExited))
                 {
                     await Task.Delay(TimeSpan.FromMilliseconds(1));
                 }
