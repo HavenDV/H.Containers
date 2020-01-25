@@ -58,7 +58,7 @@ namespace H.Containers.Tests
             Assert.AreEqual(3, result);
         }
 
-        public class CommonClass
+        public class CommonClass : IInterface
         {
             public int Test1(string test)
             {
@@ -91,6 +91,44 @@ namespace H.Containers.Tests
             var instance = ProxyFactory.CreateInstance<CommonClass>();
 
             //var result = instance.GetType().InvokeMember("Test1", BindingFlags.InvokeMethod, null, instance, new object[] {"hello"});
+            var result = instance.Test1("hello");
+            Console.WriteLine($"Result: {result}");
+
+            Assert.AreEqual(1, result);
+            instance.Test2();
+        }
+
+        [TestMethod]
+        public void DirectProxyTest()
+        {
+            DirectProxyFactory.MethodWillBeCalled += (sender, args) =>
+            {
+                Console.WriteLine($"MethodWillBeCalled: {args.MethodInfo}");
+
+                if (args.Arguments.Any())
+                {
+                    Console.WriteLine("Arguments:");
+                }
+                for (var i = 0; i < args.Arguments.Count; i++)
+                {
+                    Console.WriteLine($"{i}: \"{args.Arguments[i]}\"");
+                }
+            };
+            DirectProxyFactory.MethodCalled += (sender, args) =>
+            {
+                Console.WriteLine($"MethodCalled: {args.MethodInfo}");
+
+                if (args.Arguments.Any())
+                {
+                    Console.WriteLine("Arguments:");
+                }
+                for (var i = 0; i < args.Arguments.Count; i++)
+                {
+                    Console.WriteLine($"{i}: \"{args.Arguments[i]}\"");
+                }
+            };
+            var instance = DirectProxyFactory.CreateInstance<IInterface>(new CommonClass());
+
             var result = instance.Test1("hello");
             Console.WriteLine($"Result: {result}");
 

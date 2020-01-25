@@ -53,12 +53,12 @@ namespace H.Containers
 
         public static void GenerateMethod(ILGenerator generator, MethodInfo methodInfo)
         {
-            var listConstructorInfo = typeof(List<object>).GetConstructor(new Type[0]) ??
+            var listConstructorInfo = typeof(List<object?>).GetConstructor(Array.Empty<Type>()) ??
                                   throw new InvalidOperationException("Constructor of list is not found");
             generator.Emit(OpCodes.Newobj, listConstructorInfo); // [list]
 
             var index = 1; // First argument is type
-            var addMethodInfo = typeof(List<object>).GetMethod("Add") ??
+            var addMethodInfo = typeof(List<object?>).GetMethod("Add") ??
                                       throw new InvalidOperationException("Add method is not found");
             foreach (var _ in methodInfo.GetParameters())
             {
@@ -74,7 +74,7 @@ namespace H.Containers
             var beforeMethodCalledInfo = typeof(ProxyFactory).GetMethod(nameof(BeforeMethodCalled))
                                      ?? throw new InvalidOperationException("Method is null");
             generator.EmitCall(OpCodes.Call, beforeMethodCalledInfo, 
-                new [] { typeof(List<object>), typeof(object), typeof(string) });
+                new [] { typeof(List<object?>), typeof(object), typeof(string) });
 
             if (methodInfo.ReturnType != typeof(void))
             {
@@ -91,7 +91,7 @@ namespace H.Containers
         /*
         public void Generated_Method_Example(object value1, object value2, object value3)
         {
-            var arguments = new List<object> {value1, value2, value3};
+            var arguments = new List<object?> {value1, value2, value3};
 
             OnMethodCalled(arguments, new object(), "123");
         }
@@ -99,7 +99,7 @@ namespace H.Containers
 
         public static event EventHandler<MethodEventArgs>? MethodCalled;
 
-        public static object? BeforeMethodCalled(List<object> arguments, object instance, string name)
+        public static object? BeforeMethodCalled(List<object?> arguments, object instance, string name)
         {
             var type = instance.GetType();
             var methodInfo = type.GetMethod(name, arguments.Select(argument => argument.GetType()).ToArray()) ?? 
