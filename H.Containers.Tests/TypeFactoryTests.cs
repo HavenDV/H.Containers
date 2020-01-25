@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace H.Containers.Tests
@@ -31,6 +32,21 @@ namespace H.Containers.Tests
         [TestMethod]
         public void InterfaceTest()
         {
+            TypeFactory.MethodCalled += (sender, args) =>
+            {
+                Console.WriteLine($"MethodCalled: {args.MethodInfo}");
+
+                if (args.Arguments.Any())
+                {
+                    Console.WriteLine("Arguments:");
+                }
+                for (var i = 0; i < args.Arguments.Count; i++)
+                {
+                    Console.WriteLine($"{i}: \"{args.Arguments[i]}\"");
+                }
+
+                args.ReturnObject = args.MethodInfo.ReturnType == typeof(int) ? 3 : args.ReturnObject;
+            };
             var instance = TypeFactory.CreateInstance<IInterface>();
 
             var result = instance.Test1("hello");

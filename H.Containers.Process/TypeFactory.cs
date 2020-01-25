@@ -68,12 +68,12 @@ namespace H.Containers
                 index++;
             }
 
-            generator.Emit(OpCodes.Ldarg, 0); // [list, arg_0]
+            generator.Emit(OpCodes.Ldarg_0); // [list, arg_0]
             generator.Emit(OpCodes.Ldstr, methodInfo.Name); // [list, arg_0, name]
 
-            var method = typeof(TypeFactory).GetMethod(nameof(RunMethod)) ?? 
-                         throw new InvalidOperationException("Method is null");
-            generator.EmitCall(OpCodes.Call, method, 
+            var beforeMethodCalledInfo = typeof(TypeFactory).GetMethod(nameof(BeforeMethodCalled))
+                                     ?? throw new InvalidOperationException("Method is null");
+            generator.EmitCall(OpCodes.Call, beforeMethodCalledInfo, 
                 new [] { typeof(List<object>), typeof(object), typeof(string) });
 
             if (methodInfo.ReturnType != typeof(void))
@@ -88,27 +88,32 @@ namespace H.Containers
             generator.Emit(OpCodes.Ret);
         }
 
-        public static void RealMethod(object value1, object value2, object value3)
+        /*
+        public void Generated_Method_Example(object value1, object value2, object value3)
         {
             var arguments = new List<object> {value1, value2, value3};
-            
-            RunMethod(arguments, new object(), "123");
-        }
 
-        public static object? RunMethod(List<object> arguments, object instance, string name)
+            OnMethodCalled(arguments, new object(), "123");
+        }
+        //*/
+
+        public static event EventHandler<MethodEventArgs>? MethodCalled;
+
+        public static object? BeforeMethodCalled(List<object> arguments, object instance, string name)
         {
             var type = instance.GetType();
             var methodInfo = type.GetMethod(name, arguments.Select(argument => argument.GetType()).ToArray()) ?? 
                              throw new InvalidOperationException("Method info is not found");
 
-            Console.WriteLine($"Hello, bad man {arguments.FirstOrDefault()} {name}()");
-
-            if (methodInfo.ReturnType != typeof(void))
+            var args = new MethodEventArgs(arguments, methodInfo)
             {
-                return Activator.CreateInstance(methodInfo.ReturnType);
-            }
+                ReturnObject = methodInfo.ReturnType != typeof(void)
+                               ? Activator.CreateInstance(methodInfo.ReturnType)
+                               : null,
+            };
+            MethodCalled?.Invoke(instance, args);
 
-            return null;
+            return args.ReturnObject;
         }
 
         public static object CreateInstance(Type baseType)
