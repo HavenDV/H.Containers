@@ -64,10 +64,6 @@ namespace H.Containers
                 index++;
             }
 
-            generator.DeclareLocal(typeof(List<object>));
-            generator.Emit(OpCodes.Stloc_0); // []
-            generator.Emit(OpCodes.Ldloc_0); // [list]
-
             generator.Emit(OpCodes.Ldarg, 0); // [list, arg_0]
             generator.Emit(OpCodes.Ldstr, methodInfo.Name); // [list, arg_0, name]
 
