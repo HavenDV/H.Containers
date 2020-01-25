@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace H.Containers.Tests
 {
     [TestClass]
-    public class TypeFactoryTests
+    public class ProxyFactoryTests
     {
         public abstract class AbstractClass
         {
@@ -16,7 +16,7 @@ namespace H.Containers.Tests
         [TestMethod]
         public void AbstractTest()
         {
-            var instance = TypeFactory.CreateInstance<AbstractClass>();
+            var instance = ProxyFactory.CreateInstance<AbstractClass>();
 
             var result = instance.Test1("hello");
             Console.WriteLine($"Result: {result}");
@@ -32,7 +32,7 @@ namespace H.Containers.Tests
         [TestMethod]
         public void InterfaceTest()
         {
-            TypeFactory.MethodCalled += (sender, args) =>
+            ProxyFactory.MethodCalled += (sender, args) =>
             {
                 Console.WriteLine($"MethodCalled: {args.MethodInfo}");
 
@@ -47,7 +47,7 @@ namespace H.Containers.Tests
 
                 args.ReturnObject = args.MethodInfo.ReturnType == typeof(int) ? 3 : args.ReturnObject;
             };
-            var instance = TypeFactory.CreateInstance<IInterface>();
+            var instance = ProxyFactory.CreateInstance<IInterface>();
 
             var result = instance.Test1("hello");
             Console.WriteLine($"Result: {result}");

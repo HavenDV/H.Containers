@@ -7,9 +7,9 @@ using System.Runtime.CompilerServices;
 
 namespace H.Containers
 {
-    public static class TypeFactory
+    public static class ProxyFactory
     {
-        public static Type Create(Type baseType)
+        public static Type CreateType(Type baseType)
         {
             var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(
                 new AssemblyName(Guid.NewGuid().ToString()),
@@ -71,7 +71,7 @@ namespace H.Containers
             generator.Emit(OpCodes.Ldarg_0); // [list, arg_0]
             generator.Emit(OpCodes.Ldstr, methodInfo.Name); // [list, arg_0, name]
 
-            var beforeMethodCalledInfo = typeof(TypeFactory).GetMethod(nameof(BeforeMethodCalled))
+            var beforeMethodCalledInfo = typeof(ProxyFactory).GetMethod(nameof(BeforeMethodCalled))
                                      ?? throw new InvalidOperationException("Method is null");
             generator.EmitCall(OpCodes.Call, beforeMethodCalledInfo, 
                 new [] { typeof(List<object>), typeof(object), typeof(string) });
@@ -118,7 +118,7 @@ namespace H.Containers
 
         public static object CreateInstance(Type baseType)
         {
-            var type = Create(baseType);
+            var type = CreateType(baseType);
 
             return Activator.CreateInstance(type, new object[0])
                    ?? throw new InvalidOperationException("Created instance is null");
