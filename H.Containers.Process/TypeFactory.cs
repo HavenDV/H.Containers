@@ -3,20 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 
 namespace H.Containers
 {
     public static class TypeFactory
     {
-        public static Type Create(Type interfaceType)
+        public static Type Create(Type baseType)
         {
             var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(
                 new AssemblyName(Guid.NewGuid().ToString()),
                 AssemblyBuilderAccess.RunAndCollect);
             var moduleBuilder = assemblyBuilder.DefineDynamicModule("Module");
-            var typeBuilder = moduleBuilder.DefineType($"{interfaceType.Name}_ProxyType_{Guid.NewGuid()}", TypeAttributes.Public);
+            var typeBuilder = moduleBuilder.DefineType($"{baseType.Name}_ProxyType_{Guid.NewGuid()}", TypeAttributes.Public);
 
-            foreach (var methodInfo in interfaceType.GetMethods())
+            foreach (var methodInfo in baseType.GetMethods())
             {
                 var parameterTypes = methodInfo
                     .GetParameters()
@@ -38,7 +39,10 @@ namespace H.Containers
                     index++;
                 }
 
-                typeBuilder.AddInterfaceImplementation(interfaceType);
+                if (baseType.IsInterface)
+                {
+                    typeBuilder.AddInterfaceImplementation(baseType);
+                }
 
                 var generator = methodBuilder.GetILGenerator();
                 GenerateMethod(generator, methodInfo);
@@ -107,12 +111,23 @@ namespace H.Containers
             return null;
         }
 
-        public static object CreateInstance(Type interfaceType)
+        public static object CreateInstance(Type baseType)
         {
-            var type = Create(interfaceType);
+            var type = Create(baseType);
 
             return Activator.CreateInstance(type, new object[0])
                    ?? throw new InvalidOperationException("Created instance is null");
+        }
+
+        public static T CreateInstance<T>() where T : class
+        {
+            var instance = CreateInstance(typeof(T));
+            if (typeof(T).IsInterface)
+            {
+                return (T) instance;
+            }
+
+            return Unsafe.As<T>(instance);
         }
     }
 }

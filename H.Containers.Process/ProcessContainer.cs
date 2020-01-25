@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using H.Pipes;
@@ -79,7 +80,7 @@ namespace H.Containers
 
             //await PipeClient.WriteAsync($"create_object {typeof(T).Name}", cancellationToken).ConfigureAwait(false);
 
-            return ProxyFactory.Create<T>();
+            return TypeFactory.CreateInstance<T>();
         }
 
         public Task<Type[]> GetTypesAsync(CancellationToken cancellationToken = default)
