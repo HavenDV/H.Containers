@@ -31,8 +31,8 @@ namespace H.Containers.Tests
 
             var test = await container.CreateObjectAsync<ITest>("Test", cancellationTokenSource.Token);
 
-            test.Test1("hello");
-            //Console.WriteLine($"Result: {result}");
+            var result = test.Test1("hello");
+            Console.WriteLine($"Result: {result}");
             test.Test2();
 
             try
@@ -50,7 +50,7 @@ namespace H.Containers.Tests
 
         public interface ITest
         {
-            void Test1(string test);
+            int Test1(string test);
             void Test2();
         }
     }

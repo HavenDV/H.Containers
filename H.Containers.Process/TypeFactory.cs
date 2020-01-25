@@ -28,7 +28,7 @@ namespace H.Containers
                     MethodAttributes.Final |
                     MethodAttributes.Virtual |
                     MethodAttributes.NewSlot,
-                    typeof(void),
+                    methodInfo.ReturnType,
                     parameterTypes);
 
                 var index = 0;
@@ -74,8 +74,17 @@ namespace H.Containers
             var method = typeof(TypeFactory).GetMethod(nameof(RunMethod)) ?? 
                          throw new InvalidOperationException("Method is null");
             generator.EmitCall(OpCodes.Call, method, 
-                new [] { typeof(object[]), typeof(Type), typeof(string) });
-            
+                new [] { typeof(List<object>), typeof(object), typeof(string) });
+
+            if (methodInfo.ReturnType != typeof(void))
+            {
+                generator.Emit(OpCodes.Unbox_Any, methodInfo.ReturnType);
+            }
+            else
+            {
+                generator.Emit(OpCodes.Pop);
+            }
+
             generator.Emit(OpCodes.Ret);
         }
 
@@ -86,11 +95,20 @@ namespace H.Containers
             RunMethod(arguments, new object(), "123");
         }
 
-        public static void RunMethod(List<object> arguments, object instance, string name)
+        public static object? RunMethod(List<object> arguments, object instance, string name)
         {
             var type = instance.GetType();
+            var methodInfo = type.GetMethod(name, arguments.Select(argument => argument.GetType()).ToArray()) ?? 
+                             throw new InvalidOperationException("Method info is not found");
 
             Console.WriteLine($"Hello, bad man {arguments.FirstOrDefault()} {name}()");
+
+            if (methodInfo.ReturnType != typeof(void))
+            {
+                return Activator.CreateInstance(methodInfo.ReturnType);
+            }
+
+            return null;
         }
 
         public static object CreateInstance(Type interfaceType)
