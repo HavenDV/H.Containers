@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\H.Containers\H.Containers.csproj" />
+    <ProjectReference Include="..\H.Utilities.ProxyFactory\H.Utilities.ProxyFactory.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,9 +27,7 @@
 
   <Target Name="CopyApplication" BeforeTargets="PreBuildEvent">
     <RemoveDir Directories="$(OutDir)Application" />
-    <MSBuild Projects="$(SolutionDir)\H.Containers.Process.Application\H.Containers.Process.Application.csproj" 
-             Targets="CreateReleaseZip"
-             Properties="TargetFramework=netcoreapp3.1"/>
+    <MSBuild Projects="$(SolutionDir)\H.Containers.Process.Application\H.Containers.Process.Application.csproj" Targets="CreateReleaseZip" Properties="TargetFramework=netcoreapp3.1" />
     <ItemGroup>
       <ApplicationFiles Include="..\H.Containers.Process.Application\bin\*.zip" />
     </ItemGroup>
@@ -37,8 +36,6 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="1.1.0" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
-    <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.2" />
   </ItemGroup>
 
 </Project>
