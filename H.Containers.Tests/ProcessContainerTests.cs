@@ -31,7 +31,8 @@ namespace H.Containers.Tests
 
             var test = await container.CreateObjectAsync<ITest>("Test", cancellationTokenSource.Token);
 
-            test.Test1("");
+            test.Test1("hello");
+            //Console.WriteLine($"Result: {result}");
             test.Test2();
 
             try
