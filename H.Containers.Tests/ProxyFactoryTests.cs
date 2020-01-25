@@ -16,7 +16,8 @@ namespace H.Containers.Tests
         [TestMethod]
         public void AbstractTest()
         {
-            var instance = ProxyFactory.CreateInstance<AbstractClass>();
+            using var factory = new ProxyFactory();
+            var instance = factory.CreateInstance<AbstractClass>();
 
             var result = instance.Test1("hello");
             Console.WriteLine($"Result: {result}");
@@ -34,7 +35,8 @@ namespace H.Containers.Tests
         [TestMethod]
         public void InterfaceTest()
         {
-            ProxyFactory.MethodCalled += (sender, args) =>
+            using var factory = new ProxyFactory();
+            factory.MethodCalled += (sender, args) =>
             {
                 Console.WriteLine($"MethodCalled: {args.MethodInfo}");
 
@@ -49,8 +51,8 @@ namespace H.Containers.Tests
 
                 args.ReturnObject = args.MethodInfo.ReturnType == typeof(int) ? 3 : args.ReturnObject;
             };
-            var instance = ProxyFactory.CreateInstance<IInterface>();
-
+            var instance = factory.CreateInstance<IInterface>();
+            
             var result = instance.Test1("hello");
             Console.WriteLine($"Result: {result}");
             instance.Test2();
@@ -67,13 +69,15 @@ namespace H.Containers.Tests
 
             public void Test2()
             {
+                Console.WriteLine("Test2 is completed");
             }
         }
 
         [TestMethod]
         public void CommonClassTest()
         {
-            ProxyFactory.MethodCalled += (sender, args) =>
+            using var factory = new ProxyFactory();
+            factory.MethodCalled += (sender, args) =>
             {
                 Console.WriteLine($"MethodCalled: {args.MethodInfo}");
 
@@ -88,7 +92,7 @@ namespace H.Containers.Tests
 
                 args.ReturnObject = args.MethodInfo.ReturnType == typeof(int) ? 3 : args.ReturnObject;
             };
-            var instance = ProxyFactory.CreateInstance<CommonClass>();
+            var instance = factory.CreateInstance<CommonClass>();
 
             //var result = instance.GetType().InvokeMember("Test1", BindingFlags.InvokeMethod, null, instance, new object[] {"hello"});
             var result = instance.Test1("hello");
@@ -101,20 +105,8 @@ namespace H.Containers.Tests
         [TestMethod]
         public void DirectProxyTest()
         {
-            DirectProxyFactory.MethodWillBeCalled += (sender, args) =>
-            {
-                Console.WriteLine($"MethodWillBeCalled: {args.MethodInfo}");
-
-                if (args.Arguments.Any())
-                {
-                    Console.WriteLine("Arguments:");
-                }
-                for (var i = 0; i < args.Arguments.Count; i++)
-                {
-                    Console.WriteLine($"{i}: \"{args.Arguments[i]}\"");
-                }
-            };
-            DirectProxyFactory.MethodCalled += (sender, args) =>
+            using var factory = new DirectProxyFactory();
+            factory.MethodCalled += (sender, args) =>
             {
                 Console.WriteLine($"MethodCalled: {args.MethodInfo}");
 
@@ -126,8 +118,28 @@ namespace H.Containers.Tests
                 {
                     Console.WriteLine($"{i}: \"{args.Arguments[i]}\"");
                 }
+
+                switch (args.MethodInfo.Name)
+                {
+                    case "Test2":
+                        args.IsCanceled = true;
+                        break;
+                }
             };
-            var instance = DirectProxyFactory.CreateInstance<IInterface>(new CommonClass());
+            factory.MethodCompleted += (sender, args) =>
+            {
+                Console.WriteLine($"MethodCompleted: {args.MethodInfo}");
+
+                if (args.Arguments.Any())
+                {
+                    Console.WriteLine("Arguments:");
+                }
+                for (var i = 0; i < args.Arguments.Count; i++)
+                {
+                    Console.WriteLine($"{i}: \"{args.Arguments[i]}\"");
+                }
+            };
+            var instance = factory.CreateInstance<IInterface>(new CommonClass());
 
             var result = instance.Test1("hello");
             Console.WriteLine($"Result: {result}");

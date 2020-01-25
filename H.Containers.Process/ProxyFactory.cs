@@ -4,12 +4,23 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace H.Containers
 {
-    public static class ProxyFactory
+    public class ProxyFactory : IDisposable
     {
-        public static Type CreateType(Type baseType)
+        public GCHandle GcHandle { get; }
+
+        public virtual event EventHandler<MethodEventArgs>? MethodCalled;
+        public virtual event EventHandler<MethodEventArgs>? ExceptionOccurred;
+
+        public ProxyFactory()
+        {
+            GcHandle = GCHandle.Alloc(this);
+        }
+
+        public Type CreateType(Type baseType)
         {
             var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(
                 new AssemblyName(Guid.NewGuid().ToString()),
@@ -51,8 +62,10 @@ namespace H.Containers
             return typeBuilder.CreateType() ?? throw new InvalidOperationException("Created type is null");
         }
 
-        public static void GenerateMethod(ILGenerator generator, MethodInfo methodInfo)
+        public void GenerateMethod(ILGenerator generator, MethodInfo methodInfo)
         {
+            generator.Emit(OpCodes.Ldarg_0); // [this]
+
             var listConstructorInfo = typeof(List<object?>).GetConstructor(Array.Empty<Type>()) ??
                                   throw new InvalidOperationException("Constructor of list is not found");
             generator.Emit(OpCodes.Newobj, listConstructorInfo); // [list]
@@ -62,14 +75,15 @@ namespace H.Containers
                                       throw new InvalidOperationException("Add method is not found");
             foreach (var _ in methodInfo.GetParameters())
             {
-                generator.Emit(OpCodes.Dup); // [list, list]
-                generator.Emit(OpCodes.Ldarg, index); // [list, list, arg_i]
-                generator.Emit(OpCodes.Callvirt, addMethodInfo); // [list]
+                generator.Emit(OpCodes.Dup); // [this, list, list]
+                generator.Emit(OpCodes.Ldarg, index); // [this, list, list, arg_i]
+                generator.Emit(OpCodes.Callvirt, addMethodInfo); // [this, list]
                 index++;
             }
 
-            generator.Emit(OpCodes.Ldarg_0); // [list, arg_0]
-            generator.Emit(OpCodes.Ldstr, methodInfo.Name); // [list, arg_0, name]
+            generator.Emit(OpCodes.Ldarg_0); // [this, list, arg_0]
+            generator.Emit(OpCodes.Ldstr, methodInfo.Name); // [this, list, arg_0, name]
+            generator.Emit(OpCodes.Ldc_I8, GCHandle.ToIntPtr(GcHandle).ToInt64()); // [this, list, arg_0, name, address]
 
             var beforeMethodCalledInfo = typeof(ProxyFactory).GetMethod(nameof(BeforeMethodCalled))
                                      ?? throw new InvalidOperationException("Method is null");
@@ -88,35 +102,44 @@ namespace H.Containers
             generator.Emit(OpCodes.Ret);
         }
 
-        /*
         public void Generated_Method_Example(object value1, object value2, object value3)
         {
             var arguments = new List<object?> {value1, value2, value3};
-
-            OnMethodCalled(arguments, new object(), "123");
+            
+            BeforeMethodCalled(arguments, new object(), "123", GCHandle.ToIntPtr(GCHandle.Alloc(this)).ToInt64());
         }
-        //*/
 
-        public static event EventHandler<MethodEventArgs>? MethodCalled;
-
-        public static object? BeforeMethodCalled(List<object?> arguments, object instance, string name)
+        public object? BeforeMethodCalled(List<object?> arguments, object instance, string name, long factoryAddress)
         {
-            var type = instance.GetType();
-            var methodInfo = type.GetMethod(name, arguments.Select(argument => argument.GetType()).ToArray()) ?? 
-                             throw new InvalidOperationException("Method info is not found");
+            var intPtr = new IntPtr(factoryAddress);
+            var gcHandle = GCHandle.FromIntPtr(intPtr);
 
-            var args = new MethodEventArgs(arguments, methodInfo)
+            if (!gcHandle.IsAllocated)
+            {
+                throw new InvalidOperationException("Factory is disposed");
+            }
+            var factory = gcHandle.Target as ProxyFactory
+                          ?? throw new InvalidOperationException("Factory is null");
+            var type = instance.GetType();
+            var allArgumentsNotNull = arguments.All(argument => argument != null);
+            var methodInfo = (allArgumentsNotNull
+                                 // ReSharper disable once RedundantEnumerableCastCall
+                                 ? type.GetMethod(name, arguments.Cast<object>().Select(argument => argument.GetType()).ToArray())
+                                 : type.GetMethod(name))
+                             ?? throw new InvalidOperationException("Method info is not found");
+
+            var args = new MethodEventArgs(arguments, methodInfo, factory)
             {
                 ReturnObject = methodInfo.ReturnType != typeof(void)
-                               ? Activator.CreateInstance(methodInfo.ReturnType)
-                               : null,
+                    ? Activator.CreateInstance(methodInfo.ReturnType)
+                    : null,
             };
-            MethodCalled?.Invoke(instance, args);
+            factory.MethodCalled?.Invoke(instance, args);
 
             return args.ReturnObject;
         }
 
-        public static object CreateInstance(Type baseType)
+        public object CreateInstance(Type baseType)
         {
             var type = CreateType(baseType);
 
@@ -124,7 +147,7 @@ namespace H.Containers
                    ?? throw new InvalidOperationException("Created instance is null");
         }
 
-        public static T CreateInstance<T>() where T : class
+        public T CreateInstance<T>() where T : class
         {
             var instance = CreateInstance(typeof(T));
             if (typeof(T).IsInterface)
@@ -133,6 +156,14 @@ namespace H.Containers
             }
 
             return Unsafe.As<T>(instance);
+        }
+
+        public void Dispose()
+        {
+            if (GcHandle.IsAllocated)
+            {
+                GcHandle.Free();
+            }
         }
     }
 }

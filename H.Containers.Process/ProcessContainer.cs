@@ -80,7 +80,7 @@ namespace H.Containers
 
             //await PipeClient.WriteAsync($"create_object {typeof(T).Name}", cancellationToken).ConfigureAwait(false);
 
-            return ProxyFactory.CreateInstance<T>();
+            return new ProxyFactory().CreateInstance<T>();
         }
 
         public Task<Type[]> GetTypesAsync(CancellationToken cancellationToken = default)
