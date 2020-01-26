@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 
 namespace H.Utilities
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class EmptyProxyFactory : IDisposable
     {
         #region Properties
@@ -20,12 +23,18 @@ namespace H.Utilities
 
         #region Events
 
+        /// <summary>
+        /// 
+        /// </summary>
         public virtual event EventHandler<MethodEventArgs>? MethodCalled;
 
         #endregion
 
         #region Constructors
 
+        /// <summary>
+        /// 
+        /// </summary>
         public EmptyProxyFactory()
         {
             GcHandle = GCHandle.Alloc(this);
@@ -35,6 +44,11 @@ namespace H.Utilities
 
         #region Public methods
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="baseType"></param>
+        /// <returns></returns>
         public Type CreateType(Type baseType)
         {
             var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(
@@ -43,11 +57,16 @@ namespace H.Utilities
             var moduleBuilder = assemblyBuilder.DefineDynamicModule("Module");
             var typeBuilder = moduleBuilder.DefineType($"{baseType.Name}_ProxyType_{Guid.NewGuid()}", TypeAttributes.Public);
 
-            GenerateMethods(typeBuilder, baseType);
-
+            var _ = GenerateMethods(typeBuilder, baseType);
+            
             return typeBuilder.CreateType() ?? throw new InvalidOperationException("Created type is null");
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="baseType"></param>
+        /// <returns></returns>
         public object CreateInstance(Type baseType)
         {
             var type = CreateType(baseType);
@@ -56,6 +75,11 @@ namespace H.Utilities
                    ?? throw new InvalidOperationException("Created instance is null");
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public T CreateInstance<T>() where T : class
         {
             var instance = CreateInstance(typeof(T));
@@ -67,6 +91,9 @@ namespace H.Utilities
             return Unsafe.As<T>(instance);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void Dispose()
         {
             if (GcHandle.IsAllocated)
@@ -81,8 +108,10 @@ namespace H.Utilities
 
         #region Methods
 
-        private void GenerateMethods(TypeBuilder typeBuilder, Type baseType)
+        private List<MethodBuilder> GenerateMethods(TypeBuilder typeBuilder, Type baseType)
         {
+            var builders = new List<MethodBuilder>();
+            
             foreach (var methodInfo in baseType.GetMethods())
             {
                 var parameterTypes = methodInfo
@@ -112,7 +141,11 @@ namespace H.Utilities
 
                 var generator = methodBuilder.GetILGenerator();
                 GenerateMethod(generator, methodInfo);
+
+                builders.Add(methodBuilder);
             }
+
+            return builders;
         }
 
         private void GenerateMethod(ILGenerator generator, MethodInfo methodInfo)
@@ -169,6 +202,14 @@ namespace H.Utilities
             OnMethodCalled(arguments, new object(), "123", GCHandle.ToIntPtr(GCHandle.Alloc(this)).ToInt64());
         }
 
+        /// <summary>
+        /// Internal use only
+        /// </summary>
+        /// <param name="arguments"></param>
+        /// <param name="instance"></param>
+        /// <param name="name"></param>
+        /// <param name="factoryAddress"></param>
+        /// <returns></returns>
         public object? OnMethodCalled(List<object?> arguments, object instance, string name, long factoryAddress)
         {
             var intPtr = new IntPtr(factoryAddress);

@@ -4,14 +4,27 @@ using System.Linq;
 
 namespace H.Utilities
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class DirectProxyFactory : IDisposable
     {
-        public EmptyProxyFactory EmptyProxyFactory { get; } = new EmptyProxyFactory();
-        public Dictionary<object, object> Dictionary { get; } = new Dictionary<object, object>();
+        private EmptyProxyFactory EmptyProxyFactory { get; } = new EmptyProxyFactory();
+        private Dictionary<object, object> Dictionary { get; } = new Dictionary<object, object>();
 
+        /// <summary>
+        /// 
+        /// </summary>
         public virtual event EventHandler<MethodEventArgs>? MethodCalled;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public virtual event EventHandler<MethodEventArgs>? MethodCompleted;
 
+        /// <summary>
+        /// 
+        /// </summary>
         public DirectProxyFactory()
         {
             EmptyProxyFactory.MethodCalled += (sender, args) =>
@@ -41,6 +54,12 @@ namespace H.Utilities
             };
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="internalObj"></param>
+        /// <returns></returns>
         public T CreateInstance<T>(T internalObj) where T : class
         {
             var instance = EmptyProxyFactory.CreateInstance<T>();
@@ -50,6 +69,10 @@ namespace H.Utilities
             return instance;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="instance"></param>
         public void DeleteInstance(object instance)
         {
             if (Dictionary.ContainsKey(instance))
@@ -58,6 +81,9 @@ namespace H.Utilities
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void Dispose()
         {
             EmptyProxyFactory.Dispose();
