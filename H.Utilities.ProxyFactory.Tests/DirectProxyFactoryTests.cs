@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace H.Utilities.Tests
@@ -8,7 +10,7 @@ namespace H.Utilities.Tests
     public class DirectProxyFactoryTests
     {
         [TestMethod]
-        public void CommonClassWithInterfaceTest()
+        public async Task CommonClassWithInterfaceTest()
         {
             using var factory = new DirectProxyFactory();
             factory.MethodCalled += (sender, args) =>
@@ -51,6 +53,12 @@ namespace H.Utilities.Tests
 
             Assert.AreEqual(1, result);
             instance.Test2();
+
+            await instance.Test3Async();
+
+            var tokenSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+            await Assert.ThrowsExceptionAsync<TaskCanceledException>(
+                async () => await instance.Test4Async(tokenSource.Token));
         }
     }
 }

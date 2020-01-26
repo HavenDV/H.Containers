@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace H.Utilities
@@ -73,10 +74,16 @@ namespace H.Utilities
             var index = 1; // First argument is type
             var addMethodInfo = typeof(List<object?>).GetMethod("Add") ??
                                       throw new InvalidOperationException("Add method is not found");
-            foreach (var _ in methodInfo.GetParameters())
+            foreach (var parameterInfo in methodInfo.GetParameters())
             {
                 generator.Emit(OpCodes.Dup); // [this, list, list]
+
                 generator.Emit(OpCodes.Ldarg, index); // [this, list, list, arg_i]
+                if (parameterInfo.ParameterType.IsValueType)
+                {
+                    generator.Emit(OpCodes.Box, parameterInfo.ParameterType); // [this, list, list, arg_i]
+                }
+
                 generator.Emit(OpCodes.Callvirt, addMethodInfo); // [this, list]
                 index++;
             }
@@ -102,9 +109,9 @@ namespace H.Utilities
             generator.Emit(OpCodes.Ret);
         }
 
-        public void Generated_Method_Example(object value1, object value2, object value3)
+        public void Generated_Method_Example(object value1, object value2, CancellationToken cancellationToken = default)
         {
-            var arguments = new List<object?> {value1, value2, value3};
+            var arguments = new List<object?> {value1, value2, cancellationToken};
 
             OnMethodCalled(arguments, new object(), "123", GCHandle.ToIntPtr(GCHandle.Alloc(this)).ToInt64());
         }
@@ -125,7 +132,8 @@ namespace H.Utilities
             var methodInfo = (allArgumentsNotNull
                                  // ReSharper disable once RedundantEnumerableCastCall
                                  ? type.GetMethod(name, arguments.Cast<object>().Select(argument => argument.GetType()).ToArray())
-                                 : type.GetMethod(name))
+                                 : null)
+                             ?? type.GetMethod(name)
                              ?? throw new InvalidOperationException("Method info is not found");
 
             var args = new MethodEventArgs(arguments, methodInfo, factory)

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
+using System.Linq;
 
 namespace H.Utilities
 {
@@ -29,10 +29,13 @@ namespace H.Utilities
                     return;
                 }
 
-                args.ReturnObject = obj.GetType().InvokeMember(
-                    args.MethodInfo.Name, 
-                    BindingFlags.InvokeMethod, null, obj,
-                    args.Arguments.ToArray());
+                var method = obj.GetType().GetMethod(args.MethodInfo.Name, args.MethodInfo
+                    .GetParameters()
+                    .Select(i => i.ParameterType)
+                    .ToArray())
+                    ?? throw new InvalidOperationException($"Method not found: {args.MethodInfo}");
+
+                args.ReturnObject = method.Invoke(obj, args.Arguments.ToArray());
 
                 MethodCompleted?.Invoke(sender, args);
             };
