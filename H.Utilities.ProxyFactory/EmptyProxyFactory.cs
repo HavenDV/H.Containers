@@ -12,14 +12,28 @@ namespace H.Utilities
 {
     public class EmptyProxyFactory : IDisposable
     {
+        #region Properties
+
         private GCHandle GcHandle { get; }
 
+        #endregion
+
+        #region Events
+
         public virtual event EventHandler<MethodEventArgs>? MethodCalled;
+
+        #endregion
+
+        #region Constructors
 
         public EmptyProxyFactory()
         {
             GcHandle = GCHandle.Alloc(this);
         }
+
+        #endregion
+
+        #region Public methods
 
         public Type CreateType(Type baseType)
         {
@@ -29,6 +43,46 @@ namespace H.Utilities
             var moduleBuilder = assemblyBuilder.DefineDynamicModule("Module");
             var typeBuilder = moduleBuilder.DefineType($"{baseType.Name}_ProxyType_{Guid.NewGuid()}", TypeAttributes.Public);
 
+            GenerateMethods(typeBuilder, baseType);
+
+            return typeBuilder.CreateType() ?? throw new InvalidOperationException("Created type is null");
+        }
+
+        public object CreateInstance(Type baseType)
+        {
+            var type = CreateType(baseType);
+
+            return Activator.CreateInstance(type, new object[0])
+                   ?? throw new InvalidOperationException("Created instance is null");
+        }
+
+        public T CreateInstance<T>() where T : class
+        {
+            var instance = CreateInstance(typeof(T));
+            if (typeof(T).IsInterface)
+            {
+                return (T)instance;
+            }
+
+            return Unsafe.As<T>(instance);
+        }
+
+        public void Dispose()
+        {
+            if (GcHandle.IsAllocated)
+            {
+                GcHandle.Free();
+            }
+        }
+
+        #endregion
+
+        #region Private methods
+
+        #region Methods
+
+        private void GenerateMethods(TypeBuilder typeBuilder, Type baseType)
+        {
             foreach (var methodInfo in baseType.GetMethods())
             {
                 var parameterTypes = methodInfo
@@ -59,11 +113,9 @@ namespace H.Utilities
                 var generator = methodBuilder.GetILGenerator();
                 GenerateMethod(generator, methodInfo);
             }
-
-            return typeBuilder.CreateType() ?? throw new InvalidOperationException("Created type is null");
         }
 
-        public void GenerateMethod(ILGenerator generator, MethodInfo methodInfo)
+        private void GenerateMethod(ILGenerator generator, MethodInfo methodInfo)
         {
             generator.Emit(OpCodes.Ldarg_0); // [this]
 
@@ -109,7 +161,8 @@ namespace H.Utilities
             generator.Emit(OpCodes.Ret);
         }
 
-        public void Generated_Method_Example(object value1, object value2, CancellationToken cancellationToken = default)
+        // ReSharper disable once UnusedMember.Local
+        private void Generated_Method_Example(object value1, object value2, CancellationToken cancellationToken = default)
         {
             var arguments = new List<object?> {value1, value2, cancellationToken};
 
@@ -150,6 +203,8 @@ namespace H.Utilities
             return args.ReturnObject;
         }
 
+        #endregion
+
         private object? CreateReturnObject(MethodInfo methodInfo)
         {
             var type = methodInfo.ReturnType;
@@ -178,31 +233,6 @@ namespace H.Utilities
             return Activator.CreateInstance(type);
         }
 
-        public object CreateInstance(Type baseType)
-        {
-            var type = CreateType(baseType);
-
-            return Activator.CreateInstance(type, new object[0])
-                   ?? throw new InvalidOperationException("Created instance is null");
-        }
-
-        public T CreateInstance<T>() where T : class
-        {
-            var instance = CreateInstance(typeof(T));
-            if (typeof(T).IsInterface)
-            {
-                return (T) instance;
-            }
-
-            return Unsafe.As<T>(instance);
-        }
-
-        public void Dispose()
-        {
-            if (GcHandle.IsAllocated)
-            {
-                GcHandle.Free();
-            }
-        }
+        #endregion
     }
 }
