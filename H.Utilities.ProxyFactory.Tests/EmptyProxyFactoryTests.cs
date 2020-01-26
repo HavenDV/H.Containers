@@ -11,6 +11,9 @@ namespace H.Utilities.Tests
     {
         public abstract class AbstractClass
         {
+            public abstract int Property1 { get; set; }
+            public abstract int Property2 { get; }
+
             public abstract int Test1(string test);
             public abstract void Test2();
             public abstract Task Test3Async(CancellationToken cancellationToken = default);
@@ -23,20 +26,22 @@ namespace H.Utilities.Tests
             using var factory = new EmptyProxyFactory();
             var instance = factory.CreateInstance<AbstractClass>();
 
-            var result = instance.Test1("hello");
-            Console.WriteLine($"Result: {result}");
+            Assert.AreEqual(0, instance.Test1("hello"));
             instance.Test2();
-
-            Assert.AreEqual(0, result);
-
             await instance.Test3Async();
-            result = await instance.Test4Async();
+            Assert.AreEqual(0, await instance.Test4Async());
 
-            Assert.AreEqual(0, result);
+            Assert.AreEqual(0, instance.Property1);
+            instance.Property1 = 5;
+            Assert.AreEqual(0, instance.Property1);
+            Assert.AreEqual(0, instance.Property2);
         }
 
         public interface IInterface
         {
+            int Property1 { get; set; }
+            int Property2 { get; }
+
             int Test1(string test);
             void Test2();
             Task Test3Async(CancellationToken cancellationToken = default);
@@ -64,24 +69,28 @@ namespace H.Utilities.Tests
                 {
                     nameof(IInterface.Test1) => 3,
                     nameof(IInterface.Test4Async) => Task.FromResult(4),
+                    "get_" + nameof(IInterface.Property1) => 11,
                     _ => args.ReturnObject,
                 };
             };
             var instance = factory.CreateInstance<IInterface>();
-            
-            var result = instance.Test1("hello");
-            Console.WriteLine($"Result: {result}");
+
+            Assert.AreEqual(3, instance.Test1("hello"));
             instance.Test2();
-
-            Assert.AreEqual(3, result);
-
             await instance.Test3Async();
-            result = await instance.Test4Async();
-            Assert.AreEqual(4, result);
+            Assert.AreEqual(4, await instance.Test4Async());
+            
+            Assert.AreEqual(11, instance.Property1);
+            instance.Property1 = 5;
+            Assert.AreEqual(11, instance.Property1);
+            Assert.AreEqual(0, instance.Property2);
         }
 
         public class CommonClass : IInterface
         {
+            public int Property1 { get; set; } = 1;
+            public int Property2 { get; } = 2;
+
             public int Test1(string test)
             {
                 return 1;
@@ -133,16 +142,15 @@ namespace H.Utilities.Tests
             };
             var instance = factory.CreateInstance<CommonClass>();
 
-            //var result = instance.GetType().InvokeMember("Test1", BindingFlags.InvokeMethod, null, instance, new object[] {"hello"});
-            var result = instance.Test1("hello");
-            Console.WriteLine($"Result: {result}");
-
-            Assert.AreEqual(1, result);
+            Assert.AreEqual(1, instance.Test1("hello"));
             instance.Test2();
-
             await instance.Test3Async();
-            result = await instance.Test4Async();
-            Assert.AreEqual(4, result);
+            Assert.AreEqual(4, await instance.Test4Async());
+
+            Assert.AreEqual(0, instance.Property1);
+            instance.Property1 = 5;
+            Assert.AreEqual(5, instance.Property1);
+            Assert.AreEqual(0, instance.Property2);
         }
     }
 }
