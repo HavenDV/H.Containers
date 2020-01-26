@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace H.Utilities
 {
@@ -84,9 +85,9 @@ namespace H.Utilities
             generator.Emit(OpCodes.Ldstr, methodInfo.Name); // [this, list, arg_0, name]
             generator.Emit(OpCodes.Ldc_I8, GCHandle.ToIntPtr(GcHandle).ToInt64()); // [this, list, arg_0, name, address]
 
-            var beforeMethodCalledInfo = typeof(EmptyProxyFactory).GetMethod(nameof(BeforeMethodCalled))
+            var onMethodCalledInfo = typeof(EmptyProxyFactory).GetMethod(nameof(OnMethodCalled))
                                      ?? throw new InvalidOperationException("Method is null");
-            generator.EmitCall(OpCodes.Call, beforeMethodCalledInfo, 
+            generator.EmitCall(OpCodes.Call, onMethodCalledInfo, 
                 new [] { typeof(List<object?>), typeof(object), typeof(string) });
 
             if (methodInfo.ReturnType != typeof(void))
@@ -104,11 +105,11 @@ namespace H.Utilities
         public void Generated_Method_Example(object value1, object value2, object value3)
         {
             var arguments = new List<object?> {value1, value2, value3};
-            
-            BeforeMethodCalled(arguments, new object(), "123", GCHandle.ToIntPtr(GCHandle.Alloc(this)).ToInt64());
+
+            OnMethodCalled(arguments, new object(), "123", GCHandle.ToIntPtr(GCHandle.Alloc(this)).ToInt64());
         }
 
-        public object? BeforeMethodCalled(List<object?> arguments, object instance, string name, long factoryAddress)
+        public object? OnMethodCalled(List<object?> arguments, object instance, string name, long factoryAddress)
         {
             var intPtr = new IntPtr(factoryAddress);
             var gcHandle = GCHandle.FromIntPtr(intPtr);
@@ -129,9 +130,7 @@ namespace H.Utilities
 
             var args = new MethodEventArgs(arguments, methodInfo, factory)
             {
-                ReturnObject = methodInfo.ReturnType != typeof(void)
-                    ? Activator.CreateInstance(methodInfo.ReturnType)
-                    : null,
+                ReturnObject = CreateReturnObject(methodInfo),
             };
             factory.MethodCalled?.Invoke(instance, args);
 
@@ -141,6 +140,34 @@ namespace H.Utilities
             }
 
             return args.ReturnObject;
+        }
+
+        private object? CreateReturnObject(MethodInfo methodInfo)
+        {
+            var type = methodInfo.ReturnType;
+
+            if (type == typeof(void))
+            {
+                return null;
+            }
+            if (type == typeof(Task))
+            {
+                return Task.CompletedTask;
+            }
+            if (type.BaseType == typeof(Task))
+            {
+                var taskType = type.GenericTypeArguments.FirstOrDefault()
+                               ?? throw new InvalidOperationException("Task type is null");
+
+                var method = typeof(Task).GetMethod(nameof(Task.FromResult))
+                             ?? throw new InvalidOperationException($"{nameof(Task.FromResult)} is not found");
+                var genericMethod = method.MakeGenericMethod(taskType);
+
+                var value = Activator.CreateInstance(taskType);
+                return genericMethod.Invoke(null, new []{ value });
+            }
+
+            return Activator.CreateInstance(type);
         }
 
         public object CreateInstance(Type baseType)
