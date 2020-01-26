@@ -62,8 +62,8 @@ namespace H.Utilities.Tests
 
                 args.ReturnObject = args.MethodInfo.Name switch
                 {
-                    "Test1" => 3,
-                    "Test4Async" => Task.FromResult(4),
+                    nameof(IInterface.Test1) => 3,
+                    nameof(IInterface.Test4Async) => Task.FromResult(4),
                     _ => args.ReturnObject,
                 };
             };
@@ -124,7 +124,12 @@ namespace H.Utilities.Tests
                     Console.WriteLine($"{i}: \"{args.Arguments[i]}\"");
                 }
 
-                args.ReturnObject = args.MethodInfo.ReturnType == typeof(int) ? 3 : args.ReturnObject;
+                args.ReturnObject = args.MethodInfo.Name switch
+                {
+                    nameof(IInterface.Test1) => 3,
+                    nameof(IInterface.Test4Async) => Task.FromResult(44),
+                    _ => args.ReturnObject,
+                };
             };
             var instance = factory.CreateInstance<CommonClass>();
 

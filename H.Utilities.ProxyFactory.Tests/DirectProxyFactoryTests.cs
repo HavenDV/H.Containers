@@ -28,7 +28,11 @@ namespace H.Utilities.Tests
 
                 switch (args.MethodInfo.Name)
                 {
-                    case "Test2":
+                    case nameof(EmptyProxyFactoryTests.IInterface.Test2):
+                        args.IsCanceled = true;
+                        break;
+
+                    case nameof(EmptyProxyFactoryTests.IInterface.Test3Async):
                         args.IsCanceled = true;
                         break;
                 }
