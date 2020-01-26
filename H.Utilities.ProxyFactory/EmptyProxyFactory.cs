@@ -135,6 +135,11 @@ namespace H.Utilities
             };
             factory.MethodCalled?.Invoke(instance, args);
 
+            if (args.Exception != null)
+            {
+                throw args.Exception;
+            }
+
             return args.ReturnObject;
         }
 

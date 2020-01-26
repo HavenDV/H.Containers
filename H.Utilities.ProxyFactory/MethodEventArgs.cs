@@ -11,6 +11,7 @@ namespace H.Utilities
         public EmptyProxyFactory ProxyFactory { get; set; }
 
         public object? ReturnObject { get; set; }
+        public Exception? Exception { get; set; }
         public bool IsCanceled { get; set; }
 
         public MethodEventArgs(List<object?> arguments, MethodInfo methodInfo, EmptyProxyFactory proxyFactory)
