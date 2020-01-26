@@ -52,17 +52,17 @@ namespace H.Utilities.Tests
             };
             var instance = factory.CreateInstance<EmptyProxyFactoryTests.IInterface>(new EmptyProxyFactoryTests.CommonClass());
 
-            var result = instance.Test1("hello");
-            Console.WriteLine($"Result: {result}");
-
-            Assert.AreEqual(1, result);
+            Assert.AreEqual(1, instance.Test1("hello"));
             instance.Test2();
-
             await instance.Test3Async();
-
             var tokenSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
             await Assert.ThrowsExceptionAsync<TaskCanceledException>(
                 async () => await instance.Test4Async(tokenSource.Token));
+
+            Assert.AreEqual(1, instance.Property1);
+            instance.Property1 = 5;
+            Assert.AreEqual(5, instance.Property1);
+            Assert.AreEqual(2, instance.Property2);
         }
     }
 }
