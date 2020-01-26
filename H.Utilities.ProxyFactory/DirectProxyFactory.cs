@@ -6,7 +6,7 @@ namespace H.Utilities
 {
     public class DirectProxyFactory : IDisposable
     {
-        public ProxyFactory ProxyFactory { get; } = new ProxyFactory();
+        public EmptyProxyFactory EmptyProxyFactory { get; } = new EmptyProxyFactory();
         public Dictionary<object, object> Dictionary { get; } = new Dictionary<object, object>();
 
         public virtual event EventHandler<MethodEventArgs>? MethodCalled;
@@ -14,7 +14,7 @@ namespace H.Utilities
 
         public DirectProxyFactory()
         {
-            ProxyFactory.MethodCalled += (sender, args) =>
+            EmptyProxyFactory.MethodCalled += (sender, args) =>
             {
                 if (sender == null ||
                     !Dictionary.TryGetValue(sender, out var obj))
@@ -40,7 +40,7 @@ namespace H.Utilities
 
         public T CreateInstance<T>(T internalObj) where T : class
         {
-            var instance = ProxyFactory.CreateInstance<T>();
+            var instance = EmptyProxyFactory.CreateInstance<T>();
 
             Dictionary.Add(instance, internalObj);
 
@@ -57,7 +57,7 @@ namespace H.Utilities
 
         public void Dispose()
         {
-            ProxyFactory.Dispose();
+            EmptyProxyFactory.Dispose();
         }
     }
 }

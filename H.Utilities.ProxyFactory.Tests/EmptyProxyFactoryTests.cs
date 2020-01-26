@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace H.Utilities.Tests
 {
     [TestClass]
-    public class ProxyFactoryTests
+    public class EmptyProxyFactoryTests
     {
         public abstract class AbstractClass
         {
@@ -16,7 +16,7 @@ namespace H.Utilities.Tests
         [TestMethod]
         public void AbstractTest()
         {
-            using var factory = new ProxyFactory();
+            using var factory = new EmptyProxyFactory();
             var instance = factory.CreateInstance<AbstractClass>();
 
             var result = instance.Test1("hello");
@@ -35,7 +35,7 @@ namespace H.Utilities.Tests
         [TestMethod]
         public void InterfaceTest()
         {
-            using var factory = new ProxyFactory();
+            using var factory = new EmptyProxyFactory();
             factory.MethodCalled += (sender, args) =>
             {
                 Console.WriteLine($"MethodCalled: {args.MethodInfo}");
@@ -76,7 +76,7 @@ namespace H.Utilities.Tests
         [TestMethod]
         public void CommonClassTest()
         {
-            using var factory = new ProxyFactory();
+            using var factory = new EmptyProxyFactory();
             factory.MethodCalled += (sender, args) =>
             {
                 Console.WriteLine($"MethodCalled: {args.MethodInfo}");

@@ -8,13 +8,13 @@ using System.Runtime.InteropServices;
 
 namespace H.Utilities
 {
-    public class ProxyFactory : IDisposable
+    public class EmptyProxyFactory : IDisposable
     {
-        public GCHandle GcHandle { get; }
+        private GCHandle GcHandle { get; }
 
         public virtual event EventHandler<MethodEventArgs>? MethodCalled;
 
-        public ProxyFactory()
+        public EmptyProxyFactory()
         {
             GcHandle = GCHandle.Alloc(this);
         }
@@ -84,7 +84,7 @@ namespace H.Utilities
             generator.Emit(OpCodes.Ldstr, methodInfo.Name); // [this, list, arg_0, name]
             generator.Emit(OpCodes.Ldc_I8, GCHandle.ToIntPtr(GcHandle).ToInt64()); // [this, list, arg_0, name, address]
 
-            var beforeMethodCalledInfo = typeof(ProxyFactory).GetMethod(nameof(BeforeMethodCalled))
+            var beforeMethodCalledInfo = typeof(EmptyProxyFactory).GetMethod(nameof(BeforeMethodCalled))
                                      ?? throw new InvalidOperationException("Method is null");
             generator.EmitCall(OpCodes.Call, beforeMethodCalledInfo, 
                 new [] { typeof(List<object?>), typeof(object), typeof(string) });
@@ -117,7 +117,7 @@ namespace H.Utilities
             {
                 throw new InvalidOperationException("Factory is disposed");
             }
-            var factory = gcHandle.Target as ProxyFactory
+            var factory = gcHandle.Target as EmptyProxyFactory
                           ?? throw new InvalidOperationException("Factory is null");
             var type = instance.GetType();
             var allArgumentsNotNull = arguments.All(argument => argument != null);

@@ -44,7 +44,7 @@ namespace H.Utilities.Tests
                     Console.WriteLine($"{i}: \"{args.Arguments[i]}\"");
                 }
             };
-            var instance = factory.CreateInstance<ProxyFactoryTests.IInterface>(new ProxyFactoryTests.CommonClass());
+            var instance = factory.CreateInstance<EmptyProxyFactoryTests.IInterface>(new EmptyProxyFactoryTests.CommonClass());
 
             var result = instance.Test1("hello");
             Console.WriteLine($"Result: {result}");
