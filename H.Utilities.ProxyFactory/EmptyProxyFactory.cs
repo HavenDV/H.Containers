@@ -11,7 +11,10 @@ using H.Utilities.Args;
 namespace H.Utilities
 {
     /// <summary>
-    /// 
+    /// Creates empty copy of selected class
+    /// All methods will be have empty body and returns default body
+    /// All events will be implemented, but can be raised only by user
+    /// All properties does not have inner fields, but get/set methods is implemented as empty body methods
     /// </summary>
     public class EmptyProxyFactory
     {
@@ -313,18 +316,6 @@ namespace H.Utilities
 
         private void GenerateOnEventMethod(ILGenerator generator, EventInfo eventInfo)
         {
-            /*
-            generator.Emit(OpCodes.Ldarg_0); // [this]
-            generator.Emit(OpCodes.Ldfld, fieldInfo); // [event_field]
-            generator.Emit(OpCodes.Ldarg_0); // [event_field, this]
-            generator.Emit(OpCodes.Ldarg_1); // [event_field, this, EventArgs]
-
-            generator.EmitCall(OpCodes.Callvirt, 
-                typeof(EventHandler).GetMethod("Invoke")
-                ?? throw new InvalidOperationException("Invoke method is not found"), 
-                new [] { typeof(object), typeof(EventArgs) });
-                */
-
             generator.Emit(OpCodes.Ldarg_0); // [this]
             generator.Emit(OpCodes.Ldarg_0); // [this, this]
             generator.Emit(OpCodes.Ldarg_1); // [this, this, args]
@@ -337,6 +328,7 @@ namespace H.Utilities
             generator.Emit(OpCodes.Ret);
         }
 
+        // ReSharper disable once EventNeverSubscribedTo.Local
         private event EventHandler? OnEvent;
 
         // ReSharper disable once UnusedMember.Local
