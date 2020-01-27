@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using H.Utilities.Args;
 
 namespace H.Utilities
 {
@@ -27,6 +28,16 @@ namespace H.Utilities
         /// 
         /// </summary>
         public virtual event EventHandler<MethodEventArgs>? MethodCalled;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public virtual event EventHandler<EventEventArgs>? EventRaised;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public virtual event EventHandler<EventEventArgs>? EventCompleted;
 
         #endregion
 
@@ -380,13 +391,27 @@ namespace H.Utilities
         /// <returns></returns>
         public void OnEventRaised(object instance, object? args, string name, long factoryAddress)
         {
+            var type = instance.GetType();
             var factory = GetFactory(factoryAddress);
-            var fieldInfo = GetPrivateFieldInfo(instance.GetType(), name);
+            var eventInfo = type.GetEvent(name)
+                            ?? throw new InvalidOperationException("Event is not found");
+
+            var eventEventArgs = new EventEventArgs(args, eventInfo, factory);
+            factory.EventRaised?.Invoke(instance, eventEventArgs);
+
+            if (eventEventArgs.IsCanceled)
+            {
+                return;
+            }
+
+            var fieldInfo = GetPrivateFieldInfo(type, name);
             var field = fieldInfo?.GetValue(instance);
             if (field != null)
             {
                 GetMethodInfo(typeof(EventHandler), "Invoke").Invoke(field, new[] {instance, args});
             }
+
+            factory.EventCompleted?.Invoke(instance, eventEventArgs);
         }
 
         private static MethodInfo GetMethodInfo(Type type, string name)

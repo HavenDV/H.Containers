@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using H.Utilities.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace H.Utilities.Tests
@@ -66,7 +67,7 @@ namespace H.Utilities.Tests
                 {
                     Console.WriteLine($"{i}: \"{args.Arguments[i]?.ToString() ?? "null"}\"");
                 }
-
+                
                 args.ReturnObject = args.MethodInfo.Name switch
                 {
                     nameof(IInterface.Test1) => 3,
@@ -74,6 +75,20 @@ namespace H.Utilities.Tests
                     "get_" + nameof(IInterface.Property1) => 11,
                     _ => args.ReturnObject,
                 };
+            };
+            factory.EventRaised += (sender, args) =>
+            {
+                Console.WriteLine($"EventRaised: {args.EventInfo}");
+
+                args.IsCanceled = args.EventInfo.Name switch
+                {
+                    nameof(IInterface.Event1) => true,
+                    _ => false,
+                };
+            };
+            factory.EventCompleted += (sender, args) =>
+            {
+                Console.WriteLine($"EventCompleted: {args.EventInfo}");
             };
             var instance = factory.CreateInstance<IInterface>();
 
@@ -85,11 +100,10 @@ namespace H.Utilities.Tests
             Assert.AreEqual(11, instance.Property1);
             instance.Property1 = 5;
             Assert.AreEqual(11, instance.Property1);
-            Assert.AreEqual(0, instance.Property2);
+            Assert. AreEqual(0, instance.Property2);
 
             instance.Event1 += (sender, args) => Console.WriteLine("Event1");
-
-            instance.GetType().GetMethod("OnEvent1")?.Invoke(instance, new object?[] {EventArgs.Empty});
+            instance.RaiseEvent(nameof(IInterface.Event1), EventArgs.Empty);
         }
 
         public class CommonClass : IInterface

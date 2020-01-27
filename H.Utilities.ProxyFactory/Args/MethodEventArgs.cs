@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace H.Utilities
+namespace H.Utilities.Args
 {
     /// <summary>
     /// 
