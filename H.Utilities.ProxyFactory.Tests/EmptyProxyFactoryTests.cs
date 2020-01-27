@@ -42,6 +42,8 @@ namespace H.Utilities.Tests
             int Property1 { get; set; }
             int Property2 { get; }
 
+            event EventHandler Event1;
+
             int Test1(string test);
             void Test2();
             Task Test3Async(CancellationToken cancellationToken = default);
@@ -84,12 +86,18 @@ namespace H.Utilities.Tests
             instance.Property1 = 5;
             Assert.AreEqual(11, instance.Property1);
             Assert.AreEqual(0, instance.Property2);
+
+            instance.Event1 += (sender, args) => Console.WriteLine("Event1");
+
+            instance.GetType().GetMethod("OnEvent1")?.Invoke(instance, new object?[] {EventArgs.Empty});
         }
 
         public class CommonClass : IInterface
         {
             public int Property1 { get; set; } = 1;
             public int Property2 { get; } = 2;
+
+            public event EventHandler? Event1;
 
             public int Test1(string test)
             {

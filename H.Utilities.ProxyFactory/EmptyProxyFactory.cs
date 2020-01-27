@@ -56,9 +56,14 @@ namespace H.Utilities
                 AssemblyBuilderAccess.RunAndCollect);
             var moduleBuilder = assemblyBuilder.DefineDynamicModule("Module");
             var typeBuilder = moduleBuilder.DefineType($"{baseType.Name}_ProxyType_{Guid.NewGuid()}", TypeAttributes.Public);
+            if (baseType.IsInterface)
+            {
+                typeBuilder.AddInterfaceImplementation(baseType);
+            }
 
-            var _ = GenerateMethods(typeBuilder, baseType);
-            
+            GenerateMethods(typeBuilder, baseType);
+            GenerateEvents(typeBuilder, baseType);
+
             return typeBuilder.CreateType() ?? throw new InvalidOperationException("Created type is null");
         }
 
@@ -111,9 +116,18 @@ namespace H.Utilities
         private List<MethodBuilder> GenerateMethods(TypeBuilder typeBuilder, Type baseType)
         {
             var builders = new List<MethodBuilder>();
-            
+
+            var ignoredMethods = new List<string>();
+            ignoredMethods.AddRange(baseType.GetEvents().Select(i => $"add_{i.Name}"));
+            ignoredMethods.AddRange(baseType.GetEvents().Select(i => $"remove_{i.Name}"));
+
             foreach (var methodInfo in baseType.GetMethods())
             {
+                if (ignoredMethods.Contains(methodInfo.Name))
+                {
+                    continue;
+                }
+
                 var parameterTypes = methodInfo
                     .GetParameters()
                     .Select(parameter => parameter.ParameterType)
@@ -132,11 +146,6 @@ namespace H.Utilities
                 {
                     methodBuilder.DefineParameter(index, parameterInfo.Attributes, parameterInfo.Name);
                     index++;
-                }
-
-                if (baseType.IsInterface)
-                {
-                    typeBuilder.AddInterfaceImplementation(baseType);
                 }
 
                 var generator = methodBuilder.GetILGenerator();
@@ -180,7 +189,7 @@ namespace H.Utilities
             var onMethodCalledInfo = typeof(EmptyProxyFactory).GetMethod(nameof(OnMethodCalled))
                                      ?? throw new InvalidOperationException("Method is null");
             generator.EmitCall(OpCodes.Call, onMethodCalledInfo, 
-                new [] { typeof(List<object?>), typeof(object), typeof(string) });
+                new [] { typeof(List<object?>), typeof(object), typeof(string), typeof(long) });
 
             if (methodInfo.ReturnType != typeof(void))
             {
@@ -212,15 +221,7 @@ namespace H.Utilities
         /// <returns></returns>
         public object? OnMethodCalled(List<object?> arguments, object instance, string name, long factoryAddress)
         {
-            var intPtr = new IntPtr(factoryAddress);
-            var gcHandle = GCHandle.FromIntPtr(intPtr);
-
-            if (!gcHandle.IsAllocated)
-            {
-                throw new InvalidOperationException("Factory is disposed");
-            }
-            var factory = gcHandle.Target as EmptyProxyFactory
-                          ?? throw new InvalidOperationException("Factory is null");
+            var factory = GetFactory(factoryAddress);
             var type = instance.GetType();
             var allArgumentsNotNull = arguments.All(argument => argument != null);
             var methodInfo = (allArgumentsNotNull
@@ -242,6 +243,175 @@ namespace H.Utilities
             }
 
             return args.ReturnObject;
+        }
+
+        #endregion
+
+        #region Events
+
+        private List<EventBuilder> GenerateEvents(TypeBuilder typeBuilder, Type baseType)
+        {
+            var builders = new List<EventBuilder>();
+
+            foreach (var info in baseType.GetEvents())
+            {
+                var handlerType = // ReSharper disable once ConstantNullCoalescingCondition
+                    info.EventHandlerType ?? throw new InvalidOperationException("EventHandlerType is null");
+                var eventType = GetEventType(handlerType);
+
+                var fieldBuilder = typeBuilder.DefineField(info.Name, handlerType, FieldAttributes.Private);
+                var eventBuilder = typeBuilder.DefineEvent(info.Name, info.Attributes, handlerType);
+
+                var addMethod = typeBuilder.DefineMethod($"add_{info.Name}",
+                    MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.SpecialName | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+                    CallingConventions.Standard | CallingConventions.HasThis,
+                    typeof(void),
+                    new[] { handlerType });
+                var addGenerator = addMethod.GetILGenerator();
+                var combine = typeof(Delegate).GetMethod("Combine", new[] { typeof(Delegate), typeof(Delegate) })
+                                         ?? throw new InvalidOperationException("Combine method is not found");
+                addGenerator.Emit(OpCodes.Ldarg_0);
+                addGenerator.Emit(OpCodes.Ldarg_0);
+                addGenerator.Emit(OpCodes.Ldfld, fieldBuilder);
+                addGenerator.Emit(OpCodes.Ldarg_1);
+                addGenerator.Emit(OpCodes.Call, combine);
+                addGenerator.Emit(OpCodes.Castclass, handlerType);
+                addGenerator.Emit(OpCodes.Stfld, fieldBuilder);
+                addGenerator.Emit(OpCodes.Ret);
+
+                eventBuilder.SetAddOnMethod(addMethod); 
+                
+                var removeMethod = typeBuilder.DefineMethod($"remove_{info.Name}",
+                    MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.SpecialName | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+                    CallingConventions.Standard | CallingConventions.HasThis,
+                    typeof(void),
+                    new[] { handlerType });
+                var remove = typeof(Delegate).GetMethod("Remove", new[] { typeof(Delegate), typeof(Delegate) })
+                             ?? throw new InvalidOperationException("Remove method is not found");
+                var removeGenerator = removeMethod.GetILGenerator();
+                removeGenerator.Emit(OpCodes.Ldarg_0);
+                removeGenerator.Emit(OpCodes.Ldarg_0);
+                removeGenerator.Emit(OpCodes.Ldfld, fieldBuilder);
+                removeGenerator.Emit(OpCodes.Ldarg_1);
+                removeGenerator.Emit(OpCodes.Call, remove);
+                removeGenerator.Emit(OpCodes.Castclass, handlerType);
+                removeGenerator.Emit(OpCodes.Stfld, fieldBuilder);
+                removeGenerator.Emit(OpCodes.Ret);
+                eventBuilder.SetRemoveOnMethod(removeMethod);
+
+                var onMethodBuilder = typeBuilder.DefineMethod($"On{info.Name}",
+                    MethodAttributes.Public |
+                    MethodAttributes.HideBySig |
+                    MethodAttributes.Final |
+                    MethodAttributes.Virtual |
+                    MethodAttributes.NewSlot,
+                    typeof(void),
+                    new []{ eventType });
+                
+                var generator = onMethodBuilder.GetILGenerator();
+                GenerateOnEventMethod(generator, info);
+
+                eventBuilder.SetRaiseMethod(onMethodBuilder);
+
+                builders.Add(eventBuilder);
+            }
+
+            return builders;
+        }
+
+        private Type GetEventType(Type handlerType)
+        {
+            if (handlerType == typeof(EventHandler))
+            {
+                return typeof(EventArgs);
+            }
+            if (handlerType.BaseType == typeof(EventHandler))
+            {
+                return handlerType.GenericTypeArguments.FirstOrDefault()
+                       ?? throw new InvalidOperationException("Handler generic type is null");
+            }
+
+            return handlerType;
+        }
+
+        private void GenerateOnEventMethod(ILGenerator generator, EventInfo eventInfo)
+        {
+            /*
+            generator.Emit(OpCodes.Ldarg_0); // [this]
+            generator.Emit(OpCodes.Ldfld, fieldInfo); // [event_field]
+            generator.Emit(OpCodes.Ldarg_0); // [event_field, this]
+            generator.Emit(OpCodes.Ldarg_1); // [event_field, this, EventArgs]
+
+            generator.EmitCall(OpCodes.Callvirt, 
+                typeof(EventHandler).GetMethod("Invoke")
+                ?? throw new InvalidOperationException("Invoke method is not found"), 
+                new [] { typeof(object), typeof(EventArgs) });
+                */
+
+            generator.Emit(OpCodes.Ldarg_0); // [this]
+            generator.Emit(OpCodes.Ldarg_0); // [this, this]
+            generator.Emit(OpCodes.Ldarg_1); // [this, this, args]
+            generator.Emit(OpCodes.Ldstr, eventInfo.Name); // [this, this, args, name]
+            generator.Emit(OpCodes.Ldc_I8, GCHandle.ToIntPtr(GcHandle).ToInt64()); // [this, this, args, name, address]
+
+
+            var onEventRaisedInfo = GetMethodInfo(typeof(EmptyProxyFactory), nameof(OnEventRaised));
+            generator.EmitCall(OpCodes.Call, onEventRaisedInfo,
+                new[] { typeof(object), typeof(object), typeof(string), typeof(long) });
+
+            generator.Emit(OpCodes.Ret);
+        }
+
+        private event EventHandler? OnEvent;
+
+        // ReSharper disable once UnusedMember.Local
+        private void Generated_OnEvent_Example(EventArgs args)
+        {
+            OnEvent?.Invoke(this, args);
+        }
+
+        /// <summary>
+        /// Internal use only
+        /// </summary>
+        /// <param name="instance"></param>
+        /// <param name="args"></param>
+        /// <param name="name"></param>
+        /// <param name="factoryAddress"></param>
+        /// <returns></returns>
+        public void OnEventRaised(object instance, object? args, string name, long factoryAddress)
+        {
+            var factory = GetFactory(factoryAddress);
+            var fieldInfo = GetPrivateFieldInfo(instance.GetType(), name);
+            var field = fieldInfo?.GetValue(instance);
+            if (field != null)
+            {
+                GetMethodInfo(typeof(EventHandler), "Invoke").Invoke(field, new[] {instance, args});
+            }
+        }
+
+        private static MethodInfo GetMethodInfo(Type type, string name)
+        {
+            return type.GetMethod(name)
+                   ?? throw new InvalidOperationException($"Method \"{name}\" is not found");
+        }
+
+        private static FieldInfo GetPrivateFieldInfo(IReflect type, string name)
+        {
+            return type.GetField(name, BindingFlags.NonPublic | BindingFlags.Instance)
+                   ?? throw new InvalidOperationException($"Field \"{name}\" is not found");
+        }
+
+        private static EmptyProxyFactory GetFactory(long address)
+        {
+            var intPtr = new IntPtr(address);
+            var gcHandle = GCHandle.FromIntPtr(intPtr);
+
+            if (!gcHandle.IsAllocated)
+            {
+                throw new InvalidOperationException("Factory is disposed");
+            }
+            return gcHandle.Target as EmptyProxyFactory
+                   ?? throw new InvalidOperationException("Factory is null");
         }
 
         #endregion
