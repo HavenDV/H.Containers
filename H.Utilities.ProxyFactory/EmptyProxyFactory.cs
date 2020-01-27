@@ -57,7 +57,7 @@ namespace H.Utilities
             var instance = Activator.CreateInstance(type, new object[0])
                                   ?? throw new InvalidOperationException("Created instance is null");
 
-            var proxyFactoryField = GetPrivateFieldInfo(type, ProxyFactoryFieldName);
+            var proxyFactoryField = GetPrivateField(type, ProxyFactoryFieldName);
             proxyFactoryField.SetValue(instance, this);
 
             return instance;
@@ -149,11 +149,10 @@ namespace H.Utilities
 
             var listConstructorInfo = typeof(List<object?>).GetConstructor(Array.Empty<Type>()) ??
                                   throw new InvalidOperationException("Constructor of list is not found");
-            generator.Emit(OpCodes.Newobj, listConstructorInfo); // [list]
+            generator.Emit(OpCodes.Newobj, listConstructorInfo); // [this, list]
 
             var index = 1; // First argument is type
-            var addMethodInfo = typeof(List<object?>).GetMethod("Add") ??
-                                      throw new InvalidOperationException("Add method is not found");
+            var addMethodInfo = GetMethod(typeof(List<object?>), nameof(List<object?>.Add));
             foreach (var parameterInfo in methodInfo.GetParameters())
             {
                 generator.Emit(OpCodes.Dup); // [this, list, list]
@@ -171,9 +170,8 @@ namespace H.Utilities
             generator.Emit(OpCodes.Ldarg_0); // [this, list, arg_0]
             generator.Emit(OpCodes.Ldstr, methodInfo.Name); // [this, list, arg_0, name]
             
-            var onMethodCalledInfo = typeof(EmptyProxyFactory).GetMethod(nameof(OnMethodCalled))
-                                     ?? throw new InvalidOperationException("Method is null");
-            generator.EmitCall(OpCodes.Call, onMethodCalledInfo, 
+            generator.EmitCall(OpCodes.Call, 
+                GetMethod(typeof(EmptyProxyFactory), nameof(OnMethodCalled)), 
                 new [] { typeof(List<object?>), typeof(object), typeof(string) });
 
             if (methodInfo.ReturnType != typeof(void))
@@ -206,16 +204,15 @@ namespace H.Utilities
         public object? OnMethodCalled(List<object?> arguments, object instance, string name)
         {
             var type = instance.GetType();
-            var proxyFactoryField = GetPrivateFieldInfo(type, ProxyFactoryFieldName);
+            var proxyFactoryField = GetPrivateField(type, ProxyFactoryFieldName);
             var factory = proxyFactoryField.GetValue(instance) as EmptyProxyFactory
                           ?? throw new InvalidOperationException($"{ProxyFactoryFieldName} is null");
             var allArgumentsNotNull = arguments.All(argument => argument != null);
-            var methodInfo = (allArgumentsNotNull
-                                 // ReSharper disable once RedundantEnumerableCastCall
-                                 ? type.GetMethod(name, arguments.Cast<object>().Select(argument => argument.GetType()).ToArray())
-                                 : null)
-                             ?? type.GetMethod(name)
-                             ?? throw new InvalidOperationException("Method info is not found");
+            var methodInfo = GetMethod(type, name, 
+                allArgumentsNotNull
+                    // ReSharper disable once RedundantEnumerableCastCall
+                    ? arguments.Cast<object>().Select(argument => argument.GetType()).ToArray()
+                    : null);
 
             var args = new MethodEventArgs(arguments, methodInfo, factory)
             {
@@ -252,13 +249,12 @@ namespace H.Utilities
                     typeof(void),
                     new[] { handlerType });
                 var addGenerator = addMethod.GetILGenerator();
-                var combine = typeof(Delegate).GetMethod("Combine", new[] { typeof(Delegate), typeof(Delegate) })
-                                         ?? throw new InvalidOperationException("Combine method is not found");
                 addGenerator.Emit(OpCodes.Ldarg_0);
                 addGenerator.Emit(OpCodes.Ldarg_0);
                 addGenerator.Emit(OpCodes.Ldfld, fieldBuilder);
                 addGenerator.Emit(OpCodes.Ldarg_1);
-                addGenerator.Emit(OpCodes.Call, combine);
+                addGenerator.Emit(OpCodes.Call, 
+                    GetMethod(typeof(Delegate), nameof(Delegate.Combine), new[] { typeof(Delegate), typeof(Delegate) }));
                 addGenerator.Emit(OpCodes.Castclass, handlerType);
                 addGenerator.Emit(OpCodes.Stfld, fieldBuilder);
                 addGenerator.Emit(OpCodes.Ret);
@@ -270,14 +266,12 @@ namespace H.Utilities
                     CallingConventions.Standard | CallingConventions.HasThis,
                     typeof(void),
                     new[] { handlerType });
-                var remove = typeof(Delegate).GetMethod("Remove", new[] { typeof(Delegate), typeof(Delegate) })
-                             ?? throw new InvalidOperationException("Remove method is not found");
                 var removeGenerator = removeMethod.GetILGenerator();
                 removeGenerator.Emit(OpCodes.Ldarg_0);
                 removeGenerator.Emit(OpCodes.Ldarg_0);
                 removeGenerator.Emit(OpCodes.Ldfld, fieldBuilder);
                 removeGenerator.Emit(OpCodes.Ldarg_1);
-                removeGenerator.Emit(OpCodes.Call, remove);
+                removeGenerator.Emit(OpCodes.Call, GetMethod(typeof(Delegate), nameof(Delegate.Remove)));
                 removeGenerator.Emit(OpCodes.Castclass, handlerType);
                 removeGenerator.Emit(OpCodes.Stfld, fieldBuilder);
                 removeGenerator.Emit(OpCodes.Ret);
@@ -321,8 +315,8 @@ namespace H.Utilities
             generator.Emit(OpCodes.Ldarg_1); // [this, this, args]
             generator.Emit(OpCodes.Ldstr, eventInfo.Name); // [this, this, args, name]
 
-            var onEventRaisedInfo = GetMethodInfo(typeof(EmptyProxyFactory), nameof(OnEventRaised));
-            generator.EmitCall(OpCodes.Call, onEventRaisedInfo,
+            generator.EmitCall(OpCodes.Call, 
+                GetMethod(typeof(EmptyProxyFactory), nameof(OnEventRaised)),
                 new[] { typeof(object), typeof(object), typeof(string) });
 
             generator.Emit(OpCodes.Ret);
@@ -347,7 +341,7 @@ namespace H.Utilities
         public void OnEventRaised(object instance, object? args, string name)
         {
             var type = instance.GetType();
-            var proxyFactoryField = GetPrivateFieldInfo(type, ProxyFactoryFieldName);
+            var proxyFactoryField = GetPrivateField(type, ProxyFactoryFieldName);
             var factory = proxyFactoryField.GetValue(instance) as EmptyProxyFactory
                           ?? throw new InvalidOperationException($"{ProxyFactoryFieldName} is null");
             var eventInfo = type.GetEvent(name)
@@ -361,23 +355,27 @@ namespace H.Utilities
                 return;
             }
 
-            var fieldInfo = GetPrivateFieldInfo(type, name);
+            var fieldInfo = GetPrivateField(type, name);
             var field = fieldInfo?.GetValue(instance);
             if (field != null)
             {
-                GetMethodInfo(typeof(EventHandler), "Invoke").Invoke(field, new[] {instance, args});
+                GetMethod(typeof(EventHandler), "Invoke")
+                    .Invoke(field, new[] {instance, args});
             }
 
             factory.EventCompleted?.Invoke(instance, eventEventArgs);
         }
 
-        private static MethodInfo GetMethodInfo(Type type, string name)
+        private static MethodInfo GetMethod(Type type, string name, Type[]? types = null)
         {
-            return type.GetMethod(name)
-                   ?? throw new InvalidOperationException($"Method \"{name}\" is not found");
+            var method = types != null
+                ? type.GetMethod(name, types)
+                : type.GetMethod(name);
+            
+            return method ?? throw new InvalidOperationException($"Method \"{name}\" is not found");
         }
 
-        private static FieldInfo GetPrivateFieldInfo(IReflect type, string name)
+        private static FieldInfo GetPrivateField(IReflect type, string name)
         {
             return type.GetField(name, BindingFlags.NonPublic | BindingFlags.Instance)
                    ?? throw new InvalidOperationException($"Field \"{name}\" is not found");
@@ -401,13 +399,11 @@ namespace H.Utilities
             {
                 var taskType = type.GenericTypeArguments.FirstOrDefault()
                                ?? throw new InvalidOperationException("Task type is null");
-
-                var method = typeof(Task).GetMethod(nameof(Task.FromResult))
-                             ?? throw new InvalidOperationException($"{nameof(Task.FromResult)} is not found");
-                var genericMethod = method.MakeGenericMethod(taskType);
-
                 var value = Activator.CreateInstance(taskType);
-                return genericMethod.Invoke(null, new []{ value });
+
+                return GetMethod(typeof(Task), nameof(Task.FromResult))
+                    .MakeGenericMethod(taskType)
+                    .Invoke(null, new []{ value });
             }
 
             return Activator.CreateInstance(type);
