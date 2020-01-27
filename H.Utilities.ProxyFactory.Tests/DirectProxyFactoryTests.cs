@@ -40,15 +40,6 @@ namespace H.Utilities.Tests
             factory.MethodCompleted += (sender, args) =>
             {
                 Console.WriteLine($"MethodCompleted: {args.MethodInfo}");
-
-                if (args.Arguments.Any())
-                {
-                    Console.WriteLine("Arguments:");
-                }
-                for (var i = 0; i < args.Arguments.Count; i++)
-                {
-                    Console.WriteLine($"{i}: \"{args.Arguments[i]}\"");
-                }
             };
             var instance = factory.CreateInstance<EmptyProxyFactoryTests.IInterface>(new EmptyProxyFactoryTests.CommonClass());
 
