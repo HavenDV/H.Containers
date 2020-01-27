@@ -24,7 +24,7 @@ namespace H.Utilities.Tests
         [TestMethod]
         public async Task AbstractTest()
         {
-            var factory = new EmptyProxyFactory();
+            var factory = CreateFactory();
             var instance = factory.CreateInstance<AbstractClass>();
 
             Assert.AreEqual(0, instance.Test1("hello"));
@@ -54,20 +54,9 @@ namespace H.Utilities.Tests
         [TestMethod]
         public async Task InterfaceTest()
         {
-            var factory = new EmptyProxyFactory();
+            var factory = CreateFactory();
             factory.MethodCalled += (sender, args) =>
             {
-                Console.WriteLine($"MethodCalled: {args.MethodInfo}");
-
-                if (args.Arguments.Any())
-                {
-                    Console.WriteLine("Arguments:");
-                }
-                for (var i = 0; i < args.Arguments.Count; i++)
-                {
-                    Console.WriteLine($"{i}: \"{args.Arguments[i]?.ToString() ?? "null"}\"");
-                }
-                
                 args.ReturnObject = args.MethodInfo.Name switch
                 {
                     nameof(IInterface.Test1) => 3,
@@ -78,17 +67,11 @@ namespace H.Utilities.Tests
             };
             factory.EventRaised += (sender, args) =>
             {
-                Console.WriteLine($"EventRaised: {args.EventInfo}");
-
                 args.IsCanceled = args.EventInfo.Name switch
                 {
                     nameof(IInterface.Event1) => true,
                     _ => false,
                 };
-            };
-            factory.EventCompleted += (sender, args) =>
-            {
-                Console.WriteLine($"EventCompleted: {args.EventInfo}");
             };
             var instance = factory.CreateInstance<IInterface>();
 
@@ -136,25 +119,19 @@ namespace H.Utilities.Tests
 
                 return 4;
             }
+
+            public void RaiseEvent1()
+            {
+                Event1?.Invoke(this, EventArgs.Empty);
+            }
         }
 
         [TestMethod]
         public async Task CommonClassTest()
         {
-            var factory = new EmptyProxyFactory();
+            var factory = CreateFactory();
             factory.MethodCalled += (sender, args) =>
             {
-                Console.WriteLine($"MethodCalled: {args.MethodInfo}");
-
-                if (args.Arguments.Any())
-                {
-                    Console.WriteLine("Arguments:");
-                }
-                for (var i = 0; i < args.Arguments.Count; i++)
-                {
-                    Console.WriteLine($"{i}: \"{args.Arguments[i]}\"");
-                }
-
                 args.ReturnObject = args.MethodInfo.Name switch
                 {
                     nameof(IInterface.Test1) => 3,
@@ -174,5 +151,34 @@ namespace H.Utilities.Tests
             Assert.AreEqual(5, instance.Property1);
             Assert.AreEqual(0, instance.Property2);
         }
+
+        private static EmptyProxyFactory CreateFactory()
+        {
+            var factory = new EmptyProxyFactory();
+            factory.MethodCalled += (sender, args) =>
+            {
+                Console.WriteLine($"MethodCalled: {args.MethodInfo}");
+
+                if (args.Arguments.Any())
+                {
+                    Console.WriteLine("Arguments:");
+                }
+                for (var i = 0; i < args.Arguments.Count; i++)
+                {
+                    Console.WriteLine($"{i}: \"{args.Arguments[i]?.ToString() ?? "null"}\"");
+                }
+            };
+            factory.EventRaised += (sender, args) =>
+            {
+                Console.WriteLine($"EventRaised: {args.EventInfo}");
+            };
+            factory.EventCompleted += (sender, args) =>
+            {
+                Console.WriteLine($"EventCompleted: {args.EventInfo}");
+            };
+
+            return factory;
+        }
+
     }
 }
