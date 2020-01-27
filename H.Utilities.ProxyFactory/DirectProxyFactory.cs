@@ -8,7 +8,7 @@ namespace H.Utilities
     /// <summary>
     /// 
     /// </summary>
-    public class DirectProxyFactory : IDisposable
+    public class DirectProxyFactory
     {
         private EmptyProxyFactory EmptyProxyFactory { get; } = new EmptyProxyFactory();
         private Dictionary<object, object> Dictionary { get; } = new Dictionary<object, object>();
@@ -80,14 +80,6 @@ namespace H.Utilities
             {
                 Dictionary.Remove(instance);
             }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public void Dispose()
-        {
-            EmptyProxyFactory.Dispose();
         }
     }
 }

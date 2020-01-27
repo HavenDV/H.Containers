@@ -24,7 +24,7 @@ namespace H.Utilities.Tests
         [TestMethod]
         public async Task AbstractTest()
         {
-            using var factory = new EmptyProxyFactory();
+            var factory = new EmptyProxyFactory();
             var instance = factory.CreateInstance<AbstractClass>();
 
             Assert.AreEqual(0, instance.Test1("hello"));
@@ -54,7 +54,7 @@ namespace H.Utilities.Tests
         [TestMethod]
         public async Task InterfaceTest()
         {
-            using var factory = new EmptyProxyFactory();
+            var factory = new EmptyProxyFactory();
             factory.MethodCalled += (sender, args) =>
             {
                 Console.WriteLine($"MethodCalled: {args.MethodInfo}");
@@ -141,7 +141,7 @@ namespace H.Utilities.Tests
         [TestMethod]
         public async Task CommonClassTest()
         {
-            using var factory = new EmptyProxyFactory();
+            var factory = new EmptyProxyFactory();
             factory.MethodCalled += (sender, args) =>
             {
                 Console.WriteLine($"MethodCalled: {args.MethodInfo}");

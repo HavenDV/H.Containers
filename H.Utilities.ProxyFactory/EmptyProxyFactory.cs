@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using H.Utilities.Args;
@@ -14,11 +13,11 @@ namespace H.Utilities
     /// <summary>
     /// 
     /// </summary>
-    public class EmptyProxyFactory : IDisposable
+    public class EmptyProxyFactory
     {
-        #region Properties
+        #region Constants
 
-        private GCHandle GcHandle { get; }
+        public const string ProxyFactoryFieldName = "_proxyFactory";
 
         #endregion
 
@@ -41,42 +40,7 @@ namespace H.Utilities
 
         #endregion
 
-        #region Constructors
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public EmptyProxyFactory()
-        {
-            GcHandle = GCHandle.Alloc(this);
-        }
-
-        #endregion
-
         #region Public methods
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="baseType"></param>
-        /// <returns></returns>
-        public Type CreateType(Type baseType)
-        {
-            var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(
-                new AssemblyName(Guid.NewGuid().ToString()),
-                AssemblyBuilderAccess.RunAndCollect);
-            var moduleBuilder = assemblyBuilder.DefineDynamicModule("Module");
-            var typeBuilder = moduleBuilder.DefineType($"{baseType.Name}_ProxyType_{Guid.NewGuid()}", TypeAttributes.Public);
-            if (baseType.IsInterface)
-            {
-                typeBuilder.AddInterfaceImplementation(baseType);
-            }
-
-            GenerateMethods(typeBuilder, baseType);
-            GenerateEvents(typeBuilder, baseType);
-
-            return typeBuilder.CreateType() ?? throw new InvalidOperationException("Created type is null");
-        }
 
         /// <summary>
         /// 
@@ -87,8 +51,13 @@ namespace H.Utilities
         {
             var type = CreateType(baseType);
 
-            return Activator.CreateInstance(type, new object[0])
-                   ?? throw new InvalidOperationException("Created instance is null");
+            var instance = Activator.CreateInstance(type, new object[0])
+                                  ?? throw new InvalidOperationException("Created instance is null");
+
+            var proxyFactoryField = GetPrivateFieldInfo(type, ProxyFactoryFieldName);
+            proxyFactoryField.SetValue(instance, this);
+
+            return instance;
         }
 
         /// <summary>
@@ -107,27 +76,34 @@ namespace H.Utilities
             return Unsafe.As<T>(instance);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        public void Dispose()
-        {
-            if (GcHandle.IsAllocated)
-            {
-                GcHandle.Free();
-            }
-        }
-
         #endregion
 
         #region Private methods
 
+        private Type CreateType(Type baseType)
+        {
+            var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(
+                new AssemblyName(Guid.NewGuid().ToString()),
+                AssemblyBuilderAccess.RunAndCollect);
+            var moduleBuilder = assemblyBuilder.DefineDynamicModule("Module");
+            var typeBuilder = moduleBuilder.DefineType($"{baseType.Name}_ProxyType_{Guid.NewGuid()}", TypeAttributes.Public);
+            if (baseType.IsInterface)
+            {
+                typeBuilder.AddInterfaceImplementation(baseType);
+            }
+
+            typeBuilder.DefineField(ProxyFactoryFieldName, typeof(EmptyProxyFactory), FieldAttributes.Private);
+
+            GenerateMethods(typeBuilder, baseType);
+            GenerateEvents(typeBuilder, baseType);
+
+            return typeBuilder.CreateType() ?? throw new InvalidOperationException("Created type is null");
+        }
+
         #region Methods
 
-        private List<MethodBuilder> GenerateMethods(TypeBuilder typeBuilder, Type baseType)
+        private void GenerateMethods(TypeBuilder typeBuilder, Type baseType)
         {
-            var builders = new List<MethodBuilder>();
-
             var ignoredMethods = new List<string>();
             ignoredMethods.AddRange(baseType.GetEvents().Select(i => $"add_{i.Name}"));
             ignoredMethods.AddRange(baseType.GetEvents().Select(i => $"remove_{i.Name}"));
@@ -161,11 +137,7 @@ namespace H.Utilities
 
                 var generator = methodBuilder.GetILGenerator();
                 GenerateMethod(generator, methodInfo);
-
-                builders.Add(methodBuilder);
             }
-
-            return builders;
         }
 
         private void GenerateMethod(ILGenerator generator, MethodInfo methodInfo)
@@ -195,12 +167,11 @@ namespace H.Utilities
 
             generator.Emit(OpCodes.Ldarg_0); // [this, list, arg_0]
             generator.Emit(OpCodes.Ldstr, methodInfo.Name); // [this, list, arg_0, name]
-            generator.Emit(OpCodes.Ldc_I8, GCHandle.ToIntPtr(GcHandle).ToInt64()); // [this, list, arg_0, name, address]
-
+            
             var onMethodCalledInfo = typeof(EmptyProxyFactory).GetMethod(nameof(OnMethodCalled))
                                      ?? throw new InvalidOperationException("Method is null");
             generator.EmitCall(OpCodes.Call, onMethodCalledInfo, 
-                new [] { typeof(List<object?>), typeof(object), typeof(string), typeof(long) });
+                new [] { typeof(List<object?>), typeof(object), typeof(string) });
 
             if (methodInfo.ReturnType != typeof(void))
             {
@@ -219,7 +190,7 @@ namespace H.Utilities
         {
             var arguments = new List<object?> {value1, value2, cancellationToken};
 
-            OnMethodCalled(arguments, new object(), "123", GCHandle.ToIntPtr(GCHandle.Alloc(this)).ToInt64());
+            OnMethodCalled(arguments, new object(), "123");
         }
 
         /// <summary>
@@ -228,12 +199,13 @@ namespace H.Utilities
         /// <param name="arguments"></param>
         /// <param name="instance"></param>
         /// <param name="name"></param>
-        /// <param name="factoryAddress"></param>
         /// <returns></returns>
-        public object? OnMethodCalled(List<object?> arguments, object instance, string name, long factoryAddress)
+        public object? OnMethodCalled(List<object?> arguments, object instance, string name)
         {
-            var factory = GetFactory(factoryAddress);
             var type = instance.GetType();
+            var proxyFactoryField = GetPrivateFieldInfo(type, ProxyFactoryFieldName);
+            var factory = proxyFactoryField.GetValue(instance) as EmptyProxyFactory
+                          ?? throw new InvalidOperationException($"{ProxyFactoryFieldName} is null");
             var allArgumentsNotNull = arguments.All(argument => argument != null);
             var methodInfo = (allArgumentsNotNull
                                  // ReSharper disable once RedundantEnumerableCastCall
@@ -260,10 +232,8 @@ namespace H.Utilities
 
         #region Events
 
-        private List<EventBuilder> GenerateEvents(TypeBuilder typeBuilder, Type baseType)
+        private void GenerateEvents(TypeBuilder typeBuilder, Type baseType)
         {
-            var builders = new List<EventBuilder>();
-
             foreach (var info in baseType.GetEvents())
             {
                 var handlerType = // ReSharper disable once ConstantNullCoalescingCondition
@@ -323,11 +293,7 @@ namespace H.Utilities
                 GenerateOnEventMethod(generator, info);
 
                 eventBuilder.SetRaiseMethod(onMethodBuilder);
-
-                builders.Add(eventBuilder);
             }
-
-            return builders;
         }
 
         private Type GetEventType(Type handlerType)
@@ -363,12 +329,10 @@ namespace H.Utilities
             generator.Emit(OpCodes.Ldarg_0); // [this, this]
             generator.Emit(OpCodes.Ldarg_1); // [this, this, args]
             generator.Emit(OpCodes.Ldstr, eventInfo.Name); // [this, this, args, name]
-            generator.Emit(OpCodes.Ldc_I8, GCHandle.ToIntPtr(GcHandle).ToInt64()); // [this, this, args, name, address]
-
 
             var onEventRaisedInfo = GetMethodInfo(typeof(EmptyProxyFactory), nameof(OnEventRaised));
             generator.EmitCall(OpCodes.Call, onEventRaisedInfo,
-                new[] { typeof(object), typeof(object), typeof(string), typeof(long) });
+                new[] { typeof(object), typeof(object), typeof(string) });
 
             generator.Emit(OpCodes.Ret);
         }
@@ -387,12 +351,13 @@ namespace H.Utilities
         /// <param name="instance"></param>
         /// <param name="args"></param>
         /// <param name="name"></param>
-        /// <param name="factoryAddress"></param>
         /// <returns></returns>
-        public void OnEventRaised(object instance, object? args, string name, long factoryAddress)
+        public void OnEventRaised(object instance, object? args, string name)
         {
             var type = instance.GetType();
-            var factory = GetFactory(factoryAddress);
+            var proxyFactoryField = GetPrivateFieldInfo(type, ProxyFactoryFieldName);
+            var factory = proxyFactoryField.GetValue(instance) as EmptyProxyFactory
+                          ?? throw new InvalidOperationException($"{ProxyFactoryFieldName} is null");
             var eventInfo = type.GetEvent(name)
                             ?? throw new InvalidOperationException("Event is not found");
 
@@ -424,19 +389,6 @@ namespace H.Utilities
         {
             return type.GetField(name, BindingFlags.NonPublic | BindingFlags.Instance)
                    ?? throw new InvalidOperationException($"Field \"{name}\" is not found");
-        }
-
-        private static EmptyProxyFactory GetFactory(long address)
-        {
-            var intPtr = new IntPtr(address);
-            var gcHandle = GCHandle.FromIntPtr(intPtr);
-
-            if (!gcHandle.IsAllocated)
-            {
-                throw new InvalidOperationException("Factory is disposed");
-            }
-            return gcHandle.Target as EmptyProxyFactory
-                   ?? throw new InvalidOperationException("Factory is null");
         }
 
         #endregion

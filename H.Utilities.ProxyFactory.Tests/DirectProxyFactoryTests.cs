@@ -12,7 +12,7 @@ namespace H.Utilities.Tests
         [TestMethod]
         public async Task CommonClassWithInterfaceTest()
         {
-            using var factory = new DirectProxyFactory();
+            var factory = new DirectProxyFactory();
             factory.MethodCalled += (sender, args) =>
             {
                 Console.WriteLine($"MethodCalled: {args.MethodInfo}");
