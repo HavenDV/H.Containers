@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Description>Features:
 - Create proxy objects that look exactly like the original objects
     </Description>
@@ -23,7 +23,7 @@
     <PackageProjectUrl>https://github.com/HavenDV/H.Containers</PackageProjectUrl>
     <RepositoryUrl>https://github.com/HavenDV/H.Containers</RepositoryUrl>
     <PackageTags>proxy objects, empty proxy, direct proxy, log method calls</PackageTags>
-    <PackageReleaseNotes>Initial release(only methods and properties are supported)</PackageReleaseNotes>
+    <PackageReleaseNotes>Added events</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IncludeSymbols>true</IncludeSymbols>
