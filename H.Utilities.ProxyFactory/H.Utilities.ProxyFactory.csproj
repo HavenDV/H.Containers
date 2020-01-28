@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <Version>0.4.2</Version>
+    <Version>0.4.3</Version>
     <Description>Features:
 - Create proxy objects that look exactly like the original objects
     </Description>

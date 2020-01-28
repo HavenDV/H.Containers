@@ -23,7 +23,6 @@ namespace H.Utilities.Tests
                 };
             };
             var instance = factory.CreateInstance<EmptyProxyFactoryTests.IInterface>(new EmptyProxyFactoryTests.CommonClass());
-            instance.Event1 += (sender, args) => Console.WriteLine("Event1");
 
             Assert.AreEqual(1, instance.Test1("hello"));
             instance.Test2();
@@ -37,7 +36,10 @@ namespace H.Utilities.Tests
             Assert.AreEqual(5, instance.Property1);
             Assert.AreEqual(2, instance.Property2);
 
+            instance.Event1 += (sender, args) => Console.WriteLine("Event1");
+            instance.Event2 += (sender, args) => Console.WriteLine($"Event2 {args}");
             instance.RaiseEvent1();
+            instance.RaiseEvent2();
         }
 
         private static DirectProxyFactory CreateFactory()

@@ -45,12 +45,14 @@ namespace H.Utilities.Tests
             int Property2 { get; }
 
             event EventHandler Event1;
+            event EventHandler<int> Event2;
 
             int Test1(string test);
             void Test2();
             Task Test3Async(CancellationToken cancellationToken = default);
             Task<int> Test4Async(CancellationToken cancellationToken = default);
             void RaiseEvent1();
+            void RaiseEvent2();
         }
 
         [TestMethod]
@@ -90,6 +92,7 @@ namespace H.Utilities.Tests
             instance.Event1 += (sender, args) => Console.WriteLine("Event1");
             instance.RaiseEvent(nameof(IInterface.Event1), EventArgs.Empty);
             instance.RaiseEvent1(); // it's empty
+            instance.RaiseEvent2(); // it's empty
         }
 
         public class CommonClass : IInterface
@@ -98,6 +101,7 @@ namespace H.Utilities.Tests
             public int Property2 { get; } = 2;
 
             public event EventHandler? Event1;
+            public event EventHandler<int>? Event2;
 
             public int Test1(string test)
             {
@@ -126,6 +130,11 @@ namespace H.Utilities.Tests
             public void RaiseEvent1()
             {
                 Event1?.Invoke(this, EventArgs.Empty);
+            }
+
+            public void RaiseEvent2()
+            {
+                Event2?.Invoke(this, 777);
             }
         }
 
