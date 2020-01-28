@@ -146,30 +146,28 @@ namespace H.Utilities
 
         private void GenerateMethod(ILGenerator generator, MethodInfo methodInfo)
         {
-            generator.Emit(OpCodes.Ldarg_0); // [this]
-
             var listConstructorInfo = typeof(List<object?>).GetConstructor(Array.Empty<Type>()) ??
                                   throw new InvalidOperationException("Constructor of list is not found");
-            generator.Emit(OpCodes.Newobj, listConstructorInfo); // [this, list]
+            generator.Emit(OpCodes.Newobj, listConstructorInfo); // [list]
 
             var index = 1; // First argument is type
             var addMethodInfo = typeof(List<object?>).GetMethodInfo(nameof(List<object?>.Add));
             foreach (var parameterInfo in methodInfo.GetParameters())
             {
-                generator.Emit(OpCodes.Dup); // [this, list, list]
+                generator.Emit(OpCodes.Dup); // [list, list]
 
-                generator.Emit(OpCodes.Ldarg, index); // [this, list, list, arg_i]
+                generator.Emit(OpCodes.Ldarg, index); // [list, list, arg_i]
                 if (parameterInfo.ParameterType.IsValueType)
                 {
-                    generator.Emit(OpCodes.Box, parameterInfo.ParameterType); // [this, list, list, arg_i]
+                    generator.Emit(OpCodes.Box, parameterInfo.ParameterType); // [list, list, boxed_arg_i]
                 }
 
-                generator.Emit(OpCodes.Callvirt, addMethodInfo); // [this, list]
+                generator.Emit(OpCodes.Callvirt, addMethodInfo); // [list]
                 index++;
             }
 
-            generator.Emit(OpCodes.Ldarg_0); // [this, list, arg_0]
-            generator.Emit(OpCodes.Ldstr, methodInfo.Name); // [this, list, arg_0, name]
+            generator.Emit(OpCodes.Ldarg_0); // [list, arg_0]
+            generator.Emit(OpCodes.Ldstr, methodInfo.Name); // [list, arg_0, name]
             
             generator.EmitCall(OpCodes.Call,
                 typeof(EmptyProxyFactory).GetMethodInfo(nameof(OnMethodCalled)), 
@@ -202,7 +200,7 @@ namespace H.Utilities
         /// <param name="instance"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public object? OnMethodCalled(List<object?> arguments, object instance, string name)
+        public static object? OnMethodCalled(List<object?> arguments, object instance, string name)
         {
             var type = instance.GetType();
             var factory = type.GetPrivateFieldInfo(ProxyFactoryFieldName).GetValue(instance) as EmptyProxyFactory
@@ -366,7 +364,7 @@ namespace H.Utilities
 
         #endregion
 
-        private object? CreateReturnObject(MethodInfo methodInfo)
+        private static object? CreateReturnObject(MethodInfo methodInfo)
         {
             var type = methodInfo.ReturnType;
 
