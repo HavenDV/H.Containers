@@ -38,4 +38,24 @@
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="1.1.0" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
   </ItemGroup>
 
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <Version>0.1.0</Version>
+    <Description>Features:
+- You can run any object in another process in several lines
+- The created object looks like a real one (see ProxyFactory)
+- Full control - you can kill the process at any time and interrupt the execution of any code and free the libraries used
+    </Description>
+    <Authors>havendv</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageLicenseFile></PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/HavenDV/H.Containers</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/HavenDV/H.Containers</RepositoryUrl>
+    <PackageTags>run code in separate process, process, containers, proxy objects, direct proxy</PackageTags>
+    <PackageReleaseNotes>Initial release</PackageReleaseNotes>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
 </Project>

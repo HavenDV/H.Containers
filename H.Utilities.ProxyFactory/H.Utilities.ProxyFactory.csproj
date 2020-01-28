@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <Version>0.4.0</Version>
+    <Version>0.4.1</Version>
     <Description>Features:
 - Create proxy objects that look exactly like the original objects
     </Description>
@@ -23,7 +23,7 @@
     <PackageProjectUrl>https://github.com/HavenDV/H.Containers</PackageProjectUrl>
     <RepositoryUrl>https://github.com/HavenDV/H.Containers</RepositoryUrl>
     <PackageTags>proxy objects, empty proxy, direct proxy, log method calls</PackageTags>
-    <PackageReleaseNotes>Added DirectProxyFactory event support</PackageReleaseNotes>
+    <PackageReleaseNotes>Fixed some bugs</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IncludeSymbols>true</IncludeSymbols>
