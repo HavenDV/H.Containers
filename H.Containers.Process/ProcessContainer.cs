@@ -20,7 +20,7 @@ namespace H.Containers
         public bool ForceUpdateApplication { get; set; }
 
         private System.Diagnostics.Process? Process { get; set; }
-        private PipeClient<string>? PipeClient { get; set; }
+        private SingleConnectionPipeClient<string>? PipeClient { get; set; }
         private EmptyProxyFactory ProxyFactory { get; }
         private Dictionary<string, object> HashDictionary { get; } = new Dictionary<string, object>();
 
@@ -87,7 +87,7 @@ namespace H.Containers
             var name = $"{Name}_Pipe";
             Process = System.Diagnostics.Process.Start(path, name);
 
-            PipeClient = new PipeClient<string>(name);
+            PipeClient = new SingleConnectionPipeClient<string>(name);
             PipeClient.MessageReceived += (sender, args) => OnMessageReceived(args.Message);
             PipeClient.ExceptionOccurred += (sender, args) => OnExceptionOccurred(args.Exception);
 

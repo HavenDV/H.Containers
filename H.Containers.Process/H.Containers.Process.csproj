@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="H.Pipes" Version="1.0.9" />
+    <PackageReference Include="H.Pipes" Version="1.0.10" />
   </ItemGroup>
 
   <ItemGroup>

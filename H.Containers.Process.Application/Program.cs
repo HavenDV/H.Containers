@@ -12,7 +12,7 @@ namespace H.Containers
     {
         private static bool IsStopped { get; set; }
         private static Container Container { get; } = new Container();
-        private static PipeServer<string>? PipeServer { get; set; }
+        private static SingleConnectionPipeServer<string>? PipeServer { get; set; }
 
         private static async Task OnExceptionOccurredAsync(Exception exception, CancellationToken cancellationToken = default)
         {
@@ -21,7 +21,7 @@ namespace H.Containers
                 return;
             }
 
-            await PipeServer.WriteAsync($"exception {exception.Message}", predicate: null, cancellationToken);
+            await PipeServer.WriteAsync($"exception {exception.Message}", cancellationToken);
         }
 
         private static async Task OnEventOccurredAsync(EventEventArgs args, CancellationToken cancellationToken = default)
@@ -31,7 +31,7 @@ namespace H.Containers
                 return;
             }
 
-            await PipeServer.WriteAsync($"raise_event {args.Hash} {args.EventName} {args.PipeName}", predicate: null, cancellationToken);
+            await PipeServer.WriteAsync($"raise_event {args.Hash} {args.EventName} {args.PipeName}", cancellationToken);
 
             await using var client = new SingleConnectionPipeClient<object?>(args.PipeName);
 
@@ -51,7 +51,7 @@ namespace H.Containers
 
             var prefix = arguments.ElementAt(0);
 
-            PipeServer = new PipeServer<string>(prefix);
+            PipeServer = new SingleConnectionPipeServer<string>(prefix);
             await using var server = PipeServer;
             server.MessageReceived += async (sender, args) =>
             {
