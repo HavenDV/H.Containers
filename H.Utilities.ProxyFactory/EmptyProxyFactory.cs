@@ -242,8 +242,7 @@ namespace H.Utilities
             {
                 var handlerType = // ReSharper disable once ConstantNullCoalescingCondition
                     info.EventHandlerType ?? throw new InvalidOperationException("EventHandlerType is null");
-                var eventType = handlerType.GetEventArgsType();
-
+                
                 var fieldBuilder = typeBuilder.DefineField(info.Name, handlerType, FieldAttributes.Private);
                 var eventBuilder = typeBuilder.DefineEvent(info.Name, info.Attributes, handlerType);
 
@@ -288,7 +287,7 @@ namespace H.Utilities
                     MethodAttributes.Virtual |
                     MethodAttributes.NewSlot,
                     typeof(void),
-                    new []{ eventType });
+                    new []{ typeof(object) });
                 
                 var generator = onMethodBuilder.GetILGenerator();
                 GenerateOnEventMethod(generator, info);
@@ -333,7 +332,8 @@ namespace H.Utilities
             var factory = type.GetPrivateFieldInfo(ProxyFactoryFieldName).GetValue(instance) as EmptyProxyFactory
                           ?? throw new InvalidOperationException($"{ProxyFactoryFieldName} is null");
 
-            var eventEventArgs = new EventEventArgs(args, type.GetEventInfo(name), factory);
+            var eventInfo = type.GetEventInfo(name);
+            var eventEventArgs = new EventEventArgs(args, eventInfo, factory);
             factory.EventRaised?.Invoke(instance, eventEventArgs);
 
             if (eventEventArgs.IsCanceled)
@@ -346,7 +346,9 @@ namespace H.Utilities
                 .GetValue(instance);
             if (field != null)
             {
-                typeof(EventHandler).GetMethodInfo(nameof(EventHandler.Invoke))
+                // ReSharper disable once ConstantNullCoalescingCondition
+                var handlerType = eventInfo.EventHandlerType ?? throw new InvalidOperationException("HandlerType is null");
+                handlerType.GetMethodInfo(nameof(EventHandler.Invoke))
                     .Invoke(field, new[] {instance, args});
             }
 

@@ -53,7 +53,7 @@ namespace H.Containers.Tests
 
         public interface ISimpleEventClass
         {
-            event EventHandler Event1;
+            event EventHandler<int> Event1;
 
             void RaiseEvent1();
             int Method1(int input);
@@ -62,11 +62,11 @@ namespace H.Containers.Tests
 
         public class SimpleEventClass : ISimpleEventClass
         {
-            public event EventHandler? Event1;
+            public event EventHandler<int>? Event1;
 
             public void RaiseEvent1()
             {
-                Event1?.Invoke(this, EventArgs.Empty);
+                Event1?.Invoke(this, 777);
             }
 
             public int Method1(int input)

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -95,7 +96,7 @@ namespace H.Containers.Extensions
             public string? Name { get; set; }
             public Action<string, object, object?>? Action { get; set; }
 
-            public void HandleEvent(object sender, object? args)
+            public void HandleEvent<T>(object sender, T args)
             {
                 Name = Name ?? throw new InvalidOperationException("Name is null");
 
@@ -116,13 +117,42 @@ namespace H.Containers.Extensions
                 Name = eventName,
                 Action = action,
             };
-            var method = typeof(SubscribeObject).GetMethod(nameof(SubscribeObject.HandleEvent)) ?? throw new InvalidOperationException("Method info not found");
-            var eventInfo = instance.GetType().GetEvent(eventName) ?? throw new InvalidOperationException("Event info not found");
+            var baseMethod = typeof(SubscribeObject).GetMethod(nameof(SubscribeObject.HandleEvent)) 
+                             ?? throw new InvalidOperationException("Method info not found");
+            var eventInfo = instance.GetType().GetEvent(eventName) 
+                            ?? throw new InvalidOperationException("Event info not found");
             // ReSharper disable once ConstantNullCoalescingCondition
-            var eventHandlerType = eventInfo.EventHandlerType ?? throw new InvalidOperationException("Event Handler Type not found");
+            var eventHandlerType = eventInfo.EventHandlerType 
+                                   ?? throw new InvalidOperationException("Event Handler Type not found");
+            var method = baseMethod.MakeGenericMethod(eventHandlerType.GetEventArgsType());
+            
             var delegateObject = Delegate.CreateDelegate(eventHandlerType, subscribeObject, method, true);
 
             eventInfo.AddEventHandler(instance, delegateObject);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="handlerType"></param>
+        /// <returns></returns>
+        public static Type GetEventArgsType(this Type handlerType)
+        {
+            handlerType = handlerType ?? throw new ArgumentNullException(nameof(handlerType));
+
+            if (handlerType == typeof(EventHandler))
+            {
+                return typeof(EventArgs);
+            }
+
+            if (handlerType.BaseType == typeof(MulticastDelegate) ||
+                handlerType.BaseType == typeof(EventHandler))
+            {
+                return handlerType.GenericTypeArguments.FirstOrDefault()
+                       ?? throw new InvalidOperationException("Handler generic type is null");
+            }
+
+            return handlerType;
         }
     }
 }
