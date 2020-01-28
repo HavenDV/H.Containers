@@ -1,8 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using H.Containers.Extensions;
 using H.Pipes;
+using H.Pipes.Args;
 using H.Utilities;
+using H.Utilities.Extensions;
 
 namespace H.Containers
 {
@@ -15,6 +21,8 @@ namespace H.Containers
 
         private System.Diagnostics.Process? Process { get; set; }
         private PipeClient<string>? PipeClient { get; set; }
+        private EmptyProxyFactory ProxyFactory { get; }
+        private Dictionary<string, object> HashDictionary { get; } = new Dictionary<string, object>();
 
         #endregion
 
@@ -35,6 +43,25 @@ namespace H.Containers
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Name = (string.IsNullOrWhiteSpace(name) ? null : "") ?? throw new ArgumentException("Name is empty", nameof(name));
+
+            ProxyFactory = new EmptyProxyFactory();
+            ProxyFactory.AsyncMethodCalled += async (sender, args) =>
+            {
+                if (sender == null)
+                {
+                    return;
+                }
+
+                try
+                {
+                    args.ReturnObject = await RunMethodAsync(args.MethodInfo, sender, args.Arguments.ToArray(), CancellationToken.None)
+                        .ConfigureAwait(false);
+                }
+                catch (Exception exception)
+                {
+                    args.Exception = exception;
+                }
+            };
         }
 
         #endregion
@@ -61,9 +88,34 @@ namespace H.Containers
             Process = System.Diagnostics.Process.Start(path, name);
 
             PipeClient = new PipeClient<string>(name);
-            PipeClient.MessageReceived += (sender, args) => OnExceptionOccurred(new Exception(args.Message));
+            PipeClient.MessageReceived += (sender, args) => OnMessageReceived(args.Message);
+            PipeClient.ExceptionOccurred += (sender, args) => OnExceptionOccurred(args.Exception);
 
             await PipeClient.ConnectAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        private void OnMessageReceived(string message)
+        {
+            try
+            {
+                var prefix = message.Split(' ').First();
+                var postfix = message.Replace(prefix, string.Empty).TrimStart();
+
+                switch (prefix)
+                {
+                    case "exception":
+                        OnExceptionOccurred(new Exception(postfix));
+                        break;
+
+                    case "raise_event":
+                        ProcessEventMessage(postfix);
+                        break;
+                }
+            }
+            catch (Exception exception)
+            {
+                OnExceptionOccurred(exception);
+            }
         }
 
         public async Task LoadAssemblyAsync(string path, CancellationToken cancellationToken = default)
@@ -78,9 +130,30 @@ namespace H.Containers
         {
             PipeClient = PipeClient ?? throw new InvalidOperationException("Container is not started");
 
-            //await PipeClient.WriteAsync($"create_object {typeof(T).Name}", cancellationToken).ConfigureAwait(false);
+            var instance = ProxyFactory.CreateInstance<T>();
+            var hash = GetHash(instance);
+            HashDictionary.Add(hash, instance);
 
-            return new EmptyProxyFactory().CreateInstance<T>();
+            await PipeClient.WriteAsync($"create_object {typeName} {hash}", cancellationToken).ConfigureAwait(false);
+
+            return instance;
+        }
+
+        private async void ProcessEventMessage(string message)
+        {
+            try
+            {
+                var values = message.Split(' ');
+                var hash = values.ElementAtOrDefault(0) ?? throw new InvalidOperationException("Hash is null");
+                var eventName = values.ElementAtOrDefault(1) ?? throw new InvalidOperationException("EventName is null");
+                var pipeName = values.ElementAtOrDefault(2) ?? throw new InvalidOperationException("PipeName is null");
+
+                await OnEventAsync(eventName, hash, pipeName);
+            }
+            catch (Exception exception)
+            {
+                OnExceptionOccurred(exception);
+            }
         }
 
         public Task<Type[]> GetTypesAsync(CancellationToken cancellationToken = default)
@@ -156,6 +229,60 @@ namespace H.Containers
         public async ValueTask DisposeAsync()
         {
             await StopAsync();
+        }
+
+        #endregion
+
+        #region Private methods
+
+        private static string GetHash(object instance) => $"{instance.GetHashCode()}";
+
+        private async Task<object?> RunMethodAsync(MethodInfo methodInfo, object instance, object?[] args, CancellationToken cancellationToken = default)
+        {
+            PipeClient = PipeClient ?? throw new InvalidOperationException("Container is not started");
+
+            var hash = GetHash(instance);
+            var name = methodInfo.Name;
+            var pipeNamePrefix = $"H.Containers.Process_{hash}_{name}_{Guid.NewGuid()}_";
+            await PipeClient.WriteAsync($"run_method {name} {hash} {pipeNamePrefix}", cancellationToken).ConfigureAwait(false);
+
+            for (var i = 0; i < args.Length; i++)
+            {
+                var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                await using var client = new SingleConnectionPipeClient<object?>($"{pipeNamePrefix}{i}");
+
+                await client.ConnectAsync(tokenSource.Token);
+
+                await client.WriteAsync(args[i], tokenSource.Token);
+            }
+
+            if (methodInfo.ReturnType == typeof(void))
+            {
+                return null;
+            }
+
+            await using var server = new SingleConnectionPipeServer<object?>($"{pipeNamePrefix}out");
+
+            var messageReceivedArgs = await server.WaitEventAsync(
+                async token => await server.StartAsync(cancellationToken: token),
+                nameof(server.MessageReceived), 
+                cancellationToken) as ConnectionMessageEventArgs<object>;
+
+            return messageReceivedArgs?.Message;
+        }
+
+        private async Task OnEventAsync(string eventName, string hash, string pipeName, CancellationToken cancellationToken = default)
+        {
+            await using var server = new SingleConnectionPipeServer<object?>(pipeName);
+
+            var messageReceivedArgs = await server.WaitEventAsync(
+                async token => await server.StartAsync(cancellationToken: token),
+                nameof(server.MessageReceived),
+                cancellationToken) as ConnectionMessageEventArgs<object?>;
+
+            var args = messageReceivedArgs?.Message;
+            var instance = HashDictionary[hash];
+            instance.RaiseEvent(eventName, args);
         }
 
         #endregion

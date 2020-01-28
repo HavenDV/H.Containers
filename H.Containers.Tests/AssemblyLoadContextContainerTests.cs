@@ -7,7 +7,7 @@ namespace H.Containers.Tests
     public class AssemblyLoadContextContainerTests
     {
         [TestMethod]
-        public async Task LoadTest()
+        public void LoadTest()
         {
             //using var container = new AssemblyLoadContextContainer("Modules");
 

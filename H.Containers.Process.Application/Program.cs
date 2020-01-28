@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using H.Containers.Args;
 using H.Pipes;
 
 namespace H.Containers
@@ -20,7 +21,23 @@ namespace H.Containers
                 return;
             }
 
-            await PipeServer.WriteAsync(exception.Message, predicate: null, cancellationToken);
+            await PipeServer.WriteAsync($"exception {exception.Message}", predicate: null, cancellationToken);
+        }
+
+        private static async Task OnEventOccurredAsync(EventEventArgs args, CancellationToken cancellationToken = default)
+        {
+            if (PipeServer == null)
+            {
+                return;
+            }
+
+            await PipeServer.WriteAsync($"raise_event {args.Hash} {args.EventName} {args.PipeName}", predicate: null, cancellationToken);
+
+            await using var client = new SingleConnectionPipeClient<object?>(args.PipeName);
+
+            await client.ConnectAsync(cancellationToken);
+
+            await client.WriteAsync(args.Args, cancellationToken);
         }
 
         [MTAThread]
@@ -44,6 +61,10 @@ namespace H.Containers
             {
                 Console.Error.WriteLine($"Server Exception: {args.Exception}");
             };
+            Container.EventOccurred += async (sender, args) =>
+            {
+                await OnEventOccurredAsync(args);
+            };
             await server.StartAsync();
 
             try
@@ -64,7 +85,7 @@ namespace H.Containers
             try
             {
                 var prefix = message.Split(' ').First();
-                var postfix = message.Replace(prefix, string.Empty);
+                var postfix = message.Replace(prefix, string.Empty).TrimStart();
 
                 switch (prefix)
                 {
@@ -78,6 +99,10 @@ namespace H.Containers
 
                     case "create_object":
                         Container.CreateObject(postfix);
+                        break;
+
+                    case "run_method":
+                        await Container.RunMethod(postfix, cancellationToken);
                         break;
                 }
             }

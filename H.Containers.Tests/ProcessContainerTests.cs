@@ -12,7 +12,7 @@ namespace H.Containers.Tests
         public async Task StartTest()
         {
             var receivedException = (Exception?) null;
-            using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+            using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             await using var container = new ProcessContainer(nameof(ProcessContainerTests))
             {
                 ForceUpdateApplication = true,
@@ -29,11 +29,12 @@ namespace H.Containers.Tests
             await container.StartAsync(cancellationTokenSource.Token);
             //await container.LoadAssemblyAsync("test", cancellationTokenSource.Token);
 
-            var test = await container.CreateObjectAsync<ITest>("Test", cancellationTokenSource.Token);
+            var instance = await container.CreateObjectAsync<ISimpleEventClass>("Test", cancellationTokenSource.Token);
+            instance.Event1 += (sender, args) => Console.WriteLine($"Hello, I'm the event. My value is {args}");
 
-            var result = test.Test1("hello");
-            Console.WriteLine($"Result: {result}");
-            test.Test2();
+            instance.RaiseEvent1();
+            Assert.AreEqual(321 + 123, instance.Method1(123));
+            Assert.AreEqual("Hello, input = 123", instance.Method2("123"));
 
             try
             {
@@ -48,10 +49,13 @@ namespace H.Containers.Tests
             }
         }
 
-        public interface ITest
+        public interface ISimpleEventClass
         {
-            int Test1(string test);
-            void Test2();
+            event EventHandler Event1;
+
+            void RaiseEvent1();
+            int Method1(int input);
+            string Method2(string input);
         }
     }
 }
