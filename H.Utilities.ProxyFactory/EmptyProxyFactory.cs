@@ -343,10 +343,8 @@ namespace H.Utilities
             var type = instance.GetType();
             var factory = type.GetPrivateFieldInfo(ProxyFactoryFieldName).GetValue(instance) as EmptyProxyFactory
                           ?? throw new InvalidOperationException($"{ProxyFactoryFieldName} is null");
-            var eventInfo = type.GetEvent(name)
-                            ?? throw new InvalidOperationException("Event is not found");
 
-            var eventEventArgs = new EventEventArgs(args, eventInfo, factory);
+            var eventEventArgs = new EventEventArgs(args, type.GetEventInfo(name), factory);
             factory.EventRaised?.Invoke(instance, eventEventArgs);
 
             if (eventEventArgs.IsCanceled)

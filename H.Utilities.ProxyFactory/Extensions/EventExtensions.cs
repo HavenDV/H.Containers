@@ -2,6 +2,9 @@ using System;
 
 namespace H.Utilities.Extensions
 {
+    /// <summary>
+    /// Extensions that work with <see langword="event"/> <br/>
+    /// </summary>
     public static class EventExtensions
     {
         private class SubscribeObject
@@ -9,7 +12,6 @@ namespace H.Utilities.Extensions
             public string? Name { get; set; }
             public Action<string, object, object?>? Action { get; set; }
 
-            // ReSharper disable UnusedParameter.Local
             public void HandleEvent(object sender, object? args)
             {
                 Name = Name ?? throw new InvalidOperationException("Name is null");
@@ -18,6 +20,12 @@ namespace H.Utilities.Extensions
             }
         }
 
+        /// <summary>
+        /// Subscribes to an event by name and calls the delegate after the event occurs
+        /// </summary>
+        /// <param name="instance"></param>
+        /// <param name="eventName"></param>
+        /// <param name="action"></param>
         public static void SubscribeToEvent(this object instance, string eventName, Action<string, object, object?> action)
         {
             var subscribeObject = new SubscribeObject

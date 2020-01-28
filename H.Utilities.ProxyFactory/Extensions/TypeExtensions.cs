@@ -34,6 +34,8 @@ namespace H.Utilities.Extensions
         /// </summary>
         /// <param name="type"></param>
         /// <param name="name"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
         /// <returns></returns>
         public static FieldInfo GetPrivateFieldInfo(this IReflect type, string name)
         {
@@ -42,6 +44,23 @@ namespace H.Utilities.Extensions
 
             return type.GetField(name, BindingFlags.NonPublic | BindingFlags.Instance)
                    ?? throw new ArgumentException($"Private field \"{name}\" is not found");
+        }
+
+        /// <summary>
+        /// Gets EventInfo or throws exception
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="name"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        /// <returns></returns>
+        public static EventInfo GetEventInfo(this Type type, string name)
+        {
+            type = type ?? throw new ArgumentNullException(nameof(type));
+            name = name ?? throw new ArgumentNullException(nameof(name));
+
+            return type.GetEvent(name)
+                   ?? throw new ArgumentException($"Event \"{name}\" is not found");
         }
     }
 }
