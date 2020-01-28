@@ -242,7 +242,7 @@ namespace H.Utilities
             {
                 var handlerType = // ReSharper disable once ConstantNullCoalescingCondition
                     info.EventHandlerType ?? throw new InvalidOperationException("EventHandlerType is null");
-                var eventType = GetEventType(handlerType);
+                var eventType = handlerType.GetEventArgsType();
 
                 var fieldBuilder = typeBuilder.DefineField(info.Name, handlerType, FieldAttributes.Private);
                 var eventBuilder = typeBuilder.DefineEvent(info.Name, info.Attributes, handlerType);
@@ -295,21 +295,6 @@ namespace H.Utilities
 
                 eventBuilder.SetRaiseMethod(onMethodBuilder);
             }
-        }
-
-        private Type GetEventType(Type handlerType)
-        {
-            if (handlerType == typeof(EventHandler))
-            {
-                return typeof(EventArgs);
-            }
-            if (handlerType.BaseType == typeof(EventHandler))
-            {
-                return handlerType.GenericTypeArguments.FirstOrDefault()
-                       ?? throw new InvalidOperationException("Handler generic type is null");
-            }
-
-            return handlerType;
         }
 
         private void GenerateOnEventMethod(ILGenerator generator, EventInfo eventInfo)

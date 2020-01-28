@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 
 namespace H.Utilities.Extensions
@@ -61,6 +62,28 @@ namespace H.Utilities.Extensions
 
             return type.GetEvent(name)
                    ?? throw new ArgumentException($"Event \"{name}\" is not found");
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="handlerType"></param>
+        /// <returns></returns>
+        public static Type GetEventArgsType(this Type handlerType)
+        {
+            handlerType = handlerType ?? throw new ArgumentNullException(nameof(handlerType));
+
+            if (handlerType == typeof(EventHandler))
+            {
+                return typeof(EventArgs);
+            }
+            if (handlerType.BaseType == typeof(EventHandler))
+            {
+                return handlerType.GenericTypeArguments.FirstOrDefault()
+                       ?? throw new InvalidOperationException("Handler generic type is null");
+            }
+
+            return handlerType;
         }
     }
 }
