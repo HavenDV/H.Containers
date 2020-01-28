@@ -35,6 +35,11 @@ namespace H.Utilities
         /// <summary>
         /// 
         /// </summary>
+        public virtual event Func<object, MethodEventArgs, Task>? AsyncMethodCalled;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public virtual event EventHandler<EventEventArgs>? EventRaised;
 
         /// <summary>
@@ -217,6 +222,7 @@ namespace H.Utilities
                 ReturnObject = CreateReturnObject(methodInfo),
             };
             factory.MethodCalled?.Invoke(instance, args);
+            factory.AsyncMethodCalled?.Invoke(instance, args)?.Wait();
 
             if (args.Exception != null)
             {
@@ -369,6 +375,10 @@ namespace H.Utilities
             var type = methodInfo.ReturnType;
 
             if (type == typeof(void))
+            {
+                return null;
+            }
+            if (type == typeof(string))
             {
                 return null;
             }
