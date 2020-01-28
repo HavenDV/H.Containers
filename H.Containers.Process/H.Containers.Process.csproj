@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="H.Pipes" Version="1.0.10" />
+    <PackageReference Include="H.Pipes" Version="1.0.11" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,7 +39,7 @@
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Description>Features:
 - You can run any object in another process in several lines
 - The created object looks like a real one (see ProxyFactory)

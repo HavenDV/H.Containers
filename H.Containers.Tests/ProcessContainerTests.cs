@@ -19,6 +19,7 @@ namespace H.Containers.Tests
             };
             container.ExceptionOccurred += (sender, exception) =>
             {
+                Console.WriteLine($"ExceptionOccurred: {exception}");
                 receivedException = exception;
 
                 // ReSharper disable once AccessToDisposedClosure
@@ -29,7 +30,7 @@ namespace H.Containers.Tests
             await container.StartAsync(cancellationTokenSource.Token);
             //await container.LoadAssemblyAsync("test", cancellationTokenSource.Token);
 
-            var instance = await container.CreateObjectAsync<ISimpleEventClass>("Test", cancellationTokenSource.Token);
+            var instance = await container.CreateObjectAsync<ISimpleEventClass>(typeof(SimpleEventClass), cancellationTokenSource.Token);
             instance.Event1 += (sender, args) => Console.WriteLine($"Hello, I'm the event. My value is {args}");
 
             instance.RaiseEvent1();
@@ -42,10 +43,11 @@ namespace H.Containers.Tests
             }
             catch (OperationCanceledException)
             {
-                if (receivedException != null)
-                {
-                    Assert.Fail(receivedException.ToString());
-                }
+            }
+
+            if (receivedException != null)
+            {
+                Assert.Fail(receivedException.ToString());
             }
         }
 
@@ -56,6 +58,26 @@ namespace H.Containers.Tests
             void RaiseEvent1();
             int Method1(int input);
             string Method2(string input);
+        }
+
+        public class SimpleEventClass : ISimpleEventClass
+        {
+            public event EventHandler? Event1;
+
+            public void RaiseEvent1()
+            {
+                Event1?.Invoke(this, EventArgs.Empty);
+            }
+
+            public int Method1(int input)
+            {
+                return 321 + input;
+            }
+
+            public string Method2(string input)
+            {
+                return $"Hello, input = {input}";
+            }
         }
     }
 }

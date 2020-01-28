@@ -23,6 +23,7 @@ namespace H.Containers
         private SingleConnectionPipeClient<string>? PipeClient { get; set; }
         private EmptyProxyFactory ProxyFactory { get; }
         private Dictionary<string, object> HashDictionary { get; } = new Dictionary<string, object>();
+        private List<string> LoadedAssemblies { get; } = new List<string>();
 
         #endregion
 
@@ -98,6 +99,8 @@ namespace H.Containers
         {
             try
             {
+                message = message ?? throw new ArgumentNullException(nameof(message));
+
                 var prefix = message.Split(' ').First();
                 var postfix = message.Replace(prefix, string.Empty).TrimStart();
 
@@ -120,14 +123,18 @@ namespace H.Containers
 
         public async Task LoadAssemblyAsync(string path, CancellationToken cancellationToken = default)
         {
+            path = path ?? throw new ArgumentNullException(nameof(path));
             PipeClient = PipeClient ?? throw new InvalidOperationException("Container is not started");
 
             await PipeClient.WriteAsync($"load_assembly {path}", cancellationToken).ConfigureAwait(false);
+
+            LoadedAssemblies.Add(path);
         }
 
         public async Task<T> CreateObjectAsync<T>(string typeName, CancellationToken cancellationToken = default) 
             where T : class
         {
+            typeName = typeName ?? throw new ArgumentNullException(nameof(typeName));
             PipeClient = PipeClient ?? throw new InvalidOperationException("Container is not started");
 
             var instance = ProxyFactory.CreateInstance<T>();
@@ -137,6 +144,23 @@ namespace H.Containers
             await PipeClient.WriteAsync($"create_object {typeName} {hash}", cancellationToken).ConfigureAwait(false);
 
             return instance;
+        }
+
+        public async Task<T> CreateObjectAsync<T>(Type type, CancellationToken cancellationToken = default)
+            where T : class
+        {
+            type = type ?? throw new ArgumentNullException(nameof(type));
+
+            var path = type.Assembly.Location;
+            if (!LoadedAssemblies.Contains(path))
+            {
+                await LoadAssemblyAsync(path, cancellationToken);
+            }
+
+            return await CreateObjectAsync<T>(
+                type.FullName ?? 
+                throw new InvalidOperationException("type.FullName is null"), 
+                cancellationToken);
         }
 
         private async void ProcessEventMessage(string message)

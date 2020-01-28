@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using H.Containers.Args;
@@ -14,7 +15,7 @@ namespace H.Containers
     {
         #region Properties
 
-        //private Assembly? Assembly { get; set; }
+        private List<Assembly> Assemblies { get; } = new List<Assembly>();
         private Dictionary<string, object> ObjectsDictionary { get; } = new Dictionary<string, object>();
 
         #endregion
@@ -34,16 +35,21 @@ namespace H.Containers
 
         public void LoadAssembly(string path)
         {
-            //Assembly = Assembly.LoadFile(path);
+            var assembly = Assembly.LoadFile(path);
+
+            Assemblies.Add(assembly);
         }
 
         public void CreateObject(string postfix)
         {
             var values = postfix.Split(' ');
-            //var typeName = values.ElementAtOrDefault(0) ?? throw new InvalidOperationException("Name is null");
+            var typeName = values.ElementAtOrDefault(0) ?? throw new InvalidOperationException("Name is null");
             var hash = values.ElementAtOrDefault(1) ?? throw new InvalidOperationException("Hash is null");
 
-            var instance = new SimpleEventClass();
+            var assembly = Assemblies.FirstOrDefault(i => 
+                               i.GetTypes().Any(type => type.FullName == typeName))
+                           ?? throw new InvalidOperationException($"Assembly with type \"{typeName}\" is not loaded");
+            var instance = assembly.CreateInstance(typeName) ?? throw new InvalidOperationException("Instance is null");
 
             foreach (var eventInfo in instance.GetType().GetEvents())
             {
@@ -53,9 +59,7 @@ namespace H.Containers
                         $"H.Containers.Process_{hash}_{name}_Event_{Guid.NewGuid()}", args));
                 });
             }
-            //Assembly = Assembly ?? throw new InvalidOperationException("Assembly is not loaded");
 
-            //Object = Assembly.CreateInstance(typeName);
             ObjectsDictionary.Add(hash, instance);
         }
 
@@ -123,34 +127,5 @@ namespace H.Containers
         }
 
         #endregion
-    }
-
-    public interface ISimpleEventClass
-    {
-        event EventHandler Event1;
-
-        void RaiseEvent1();
-        int Method1(int input);
-        string Method2(string input);
-    }
-
-    public class SimpleEventClass : ISimpleEventClass
-    {
-        public event EventHandler? Event1;
-
-        public void RaiseEvent1()
-        {
-            Event1?.Invoke(this, EventArgs.Empty);
-        }
-
-        public int Method1(int input)
-        {
-            return 321 + input;
-        }
-
-        public string Method2(string input)
-        {
-            return $"Hello, input = {input}";
-        }
     }
 }
