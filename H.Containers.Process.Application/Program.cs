@@ -21,7 +21,7 @@ namespace H.Containers
                 return;
             }
 
-            await PipeServer.WriteAsync($"exception {exception.Message}", cancellationToken);
+            await PipeServer.WriteAsync($"exception {exception.Message} StackTrace: {exception.StackTrace}", cancellationToken);
         }
 
         private static async Task OnEventOccurredAsync(EventEventArgs args, CancellationToken cancellationToken = default)
