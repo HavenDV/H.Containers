@@ -2,7 +2,7 @@ using System;
 
 namespace H.Utilities.Extensions
 {
-    internal static class EventExtensions
+    public static class EventExtensions
     {
         private class SubscribeObject
         {
@@ -25,7 +25,7 @@ namespace H.Utilities.Extensions
                 Name = eventName,
                 Action = action,
             };
-            var method = typeof(SubscribeObject).GetMethod(nameof(SubscribeObject.HandleEvent)) ?? throw new InvalidOperationException("Method not found");
+            var method = typeof(SubscribeObject).GetMethodInfo(nameof(SubscribeObject.HandleEvent));
             var eventInfo = instance.GetType().GetEvent(eventName) ?? throw new InvalidOperationException("Event info not found");
             // ReSharper disable once ConstantNullCoalescingCondition
             var eventHandlerType = eventInfo.EventHandlerType ?? throw new InvalidOperationException("Event Handler Type not found");
