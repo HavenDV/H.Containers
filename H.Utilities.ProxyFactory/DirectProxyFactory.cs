@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using H.Utilities.Args;
+using H.Utilities.Extensions;
 
 namespace H.Utilities
 {
@@ -10,8 +11,14 @@ namespace H.Utilities
     /// </summary>
     public class DirectProxyFactory
     {
+        #region Properties
+
         private EmptyProxyFactory EmptyProxyFactory { get; } = new EmptyProxyFactory();
         private Dictionary<object, object> Dictionary { get; } = new Dictionary<object, object>();
+
+        #endregion
+
+        #region Events
 
         /// <summary>
         /// 
@@ -22,6 +29,20 @@ namespace H.Utilities
         /// 
         /// </summary>
         public virtual event EventHandler<MethodEventArgs>? MethodCompleted;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public virtual event EventHandler<EventEventArgs>? EventRaised;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public virtual event EventHandler<EventEventArgs>? EventCompleted;
+
+        #endregion
+
+        #region Constructors
 
         /// <summary>
         /// 
@@ -53,7 +74,13 @@ namespace H.Utilities
 
                 MethodCompleted?.Invoke(sender, args);
             };
+            EmptyProxyFactory.EventRaised += (sender, args) => EventRaised?.Invoke(this, args);
+            EmptyProxyFactory.EventCompleted += (sender, args) => EventCompleted?.Invoke(this, args);
         }
+
+        #endregion
+
+        #region Public methods
 
         /// <summary>
         /// 
@@ -66,6 +93,14 @@ namespace H.Utilities
             var instance = EmptyProxyFactory.CreateInstance<T>();
 
             Dictionary.Add(instance, internalObj);
+
+            foreach (var eventInfo in internalObj.GetType().GetEvents())
+            {
+                internalObj.SubscribeToEvent(eventInfo.Name, (name, obj, args) =>
+                {
+                    instance.RaiseEvent(name, args);
+                });
+            }
 
             return instance;
         }
@@ -81,5 +116,7 @@ namespace H.Utilities
                 Dictionary.Remove(instance);
             }
         }
+
+        #endregion
     }
 }

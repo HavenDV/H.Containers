@@ -19,6 +19,7 @@ namespace H.Utilities.Tests
             public abstract void Test2();
             public abstract Task Test3Async(CancellationToken cancellationToken = default);
             public abstract Task<int> Test4Async(CancellationToken cancellationToken = default);
+            public abstract void RaiseEvent1();
         }
 
         [TestMethod]
@@ -49,6 +50,7 @@ namespace H.Utilities.Tests
             void Test2();
             Task Test3Async(CancellationToken cancellationToken = default);
             Task<int> Test4Async(CancellationToken cancellationToken = default);
+            void RaiseEvent1();
         }
 
         [TestMethod]
@@ -87,6 +89,7 @@ namespace H.Utilities.Tests
 
             instance.Event1 += (sender, args) => Console.WriteLine("Event1");
             instance.RaiseEvent(nameof(IInterface.Event1), EventArgs.Empty);
+            instance.RaiseEvent1(); // it's empty
         }
 
         public class CommonClass : IInterface
@@ -179,6 +182,5 @@ namespace H.Utilities.Tests
 
             return factory;
         }
-
     }
 }

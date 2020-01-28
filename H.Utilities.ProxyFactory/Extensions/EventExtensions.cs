@@ -1,67 +1,37 @@
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace H.Utilities.Extensions
 {
-    /// <summary>
-    /// Extensions that work with <see langword="event"/> <br/>
-    /// <![CDATA[Version: 1.0.0.0]]> <br/>
-    /// </summary>
-    public static class EventExtensions
+    internal static class EventExtensions
     {
-        private class WaitObject
+        private class SubscribeObject
         {
-            public TaskCompletionSource<EventArgs?>? Source { get; set; }
+            public string? Name { get; set; }
+            public Action<string, object, object?>? Action { get; set; }
 
             // ReSharper disable UnusedParameter.Local
-            public void HandleEvent(object sender, EventArgs e)
+            public void HandleEvent(object sender, object? args)
             {
-                Source?.TrySetResult(e);
+                Name = Name ?? throw new InvalidOperationException("Name is null");
+
+                Action?.Invoke(Name, sender, args);
             }
         }
 
-        /// <summary>
-        /// Asynchronously expects <see langword="event"/> until they occur or until canceled <br/>
-        /// <![CDATA[Version: 1.0.0.0]]> <br/>
-        /// <![CDATA[Dependency: WaitObject]]> <br/>
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="eventName"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public static async Task<EventArgs?> WaitEventAsync(this object value, string eventName, CancellationToken cancellationToken = default)
+        public static void SubscribeToEvent(this object instance, string eventName, Action<string, object, object?> action)
         {
-            var taskCompletionSource = new TaskCompletionSource<EventArgs?>();
-            using var cancellationSource = new CancellationTokenSource();
-
-            cancellationSource.Token.Register(() => taskCompletionSource.TrySetCanceled());
-            cancellationToken.Register(() => taskCompletionSource.TrySetCanceled());
-
-            var waitObject = new WaitObject
+            var subscribeObject = new SubscribeObject
             {
-                Source = taskCompletionSource,
+                Name = eventName,
+                Action = action,
             };
-            var method = typeof(WaitObject).GetMethod(nameof(WaitObject.HandleEvent)) ?? throw new InvalidOperationException("Method not found");
-            var eventInfo = value.GetType().GetEvent(eventName) ?? throw new InvalidOperationException("Event info not found");
+            var method = typeof(SubscribeObject).GetMethod(nameof(SubscribeObject.HandleEvent)) ?? throw new InvalidOperationException("Method not found");
+            var eventInfo = instance.GetType().GetEvent(eventName) ?? throw new InvalidOperationException("Event info not found");
             // ReSharper disable once ConstantNullCoalescingCondition
             var eventHandlerType = eventInfo.EventHandlerType ?? throw new InvalidOperationException("Event Handler Type not found");
-            var delegateObject = Delegate.CreateDelegate(eventHandlerType, waitObject, method, true);
+            var delegateObject = Delegate.CreateDelegate(eventHandlerType, subscribeObject, method, true);
 
-            try
-            {
-                eventInfo.AddEventHandler(value, delegateObject);
-
-                return await taskCompletionSource.Task.ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                return null;
-            }
-            finally
-            {
-                eventInfo.RemoveEventHandler(value, delegateObject);
-            }
+            eventInfo.AddEventHandler(instance, delegateObject);
         }
     }
 }

@@ -12,36 +12,18 @@ namespace H.Utilities.Tests
         [TestMethod]
         public async Task CommonClassWithInterfaceTest()
         {
-            var factory = new DirectProxyFactory();
+            var factory = CreateFactory();
             factory.MethodCalled += (sender, args) =>
             {
-                Console.WriteLine($"MethodCalled: {args.MethodInfo}");
-
-                if (args.Arguments.Any())
+                args.IsCanceled = args.MethodInfo.Name switch
                 {
-                    Console.WriteLine("Arguments:");
-                }
-                for (var i = 0; i < args.Arguments.Count; i++)
-                {
-                    Console.WriteLine($"{i}: \"{args.Arguments[i]}\"");
-                }
-
-                switch (args.MethodInfo.Name)
-                {
-                    case nameof(EmptyProxyFactoryTests.IInterface.Test2):
-                        args.IsCanceled = true;
-                        break;
-
-                    case nameof(EmptyProxyFactoryTests.IInterface.Test3Async):
-                        args.IsCanceled = true;
-                        break;
-                }
-            };
-            factory.MethodCompleted += (sender, args) =>
-            {
-                Console.WriteLine($"MethodCompleted: {args.MethodInfo}");
+                    nameof(EmptyProxyFactoryTests.IInterface.Test2) => true,
+                    nameof(EmptyProxyFactoryTests.IInterface.Test3Async) => true,
+                    _ => false,
+                };
             };
             var instance = factory.CreateInstance<EmptyProxyFactoryTests.IInterface>(new EmptyProxyFactoryTests.CommonClass());
+            instance.Event1 += (sender, args) => Console.WriteLine("Event1");
 
             Assert.AreEqual(1, instance.Test1("hello"));
             instance.Test2();
@@ -54,6 +36,40 @@ namespace H.Utilities.Tests
             instance.Property1 = 5;
             Assert.AreEqual(5, instance.Property1);
             Assert.AreEqual(2, instance.Property2);
+
+            instance.RaiseEvent1();
+        }
+
+        private static DirectProxyFactory CreateFactory()
+        {
+            var factory = new DirectProxyFactory();
+            factory.MethodCalled += (sender, args) =>
+            {
+                Console.WriteLine($"MethodCalled: {args.MethodInfo}");
+
+                if (args.Arguments.Any())
+                {
+                    Console.WriteLine("Arguments:");
+                }
+                for (var i = 0; i < args.Arguments.Count; i++)
+                {
+                    Console.WriteLine($"{i}: \"{args.Arguments[i]?.ToString() ?? "null"}\"");
+                }
+            };
+            factory.MethodCompleted += (sender, args) =>
+            {
+                Console.WriteLine($"MethodCompleted: {args.MethodInfo}");
+            };
+            factory.EventRaised += (sender, args) =>
+            {
+                Console.WriteLine($"EventRaised: {args.EventInfo}");
+            };
+            factory.EventCompleted += (sender, args) =>
+            {
+                Console.WriteLine($"EventCompleted: {args.EventInfo}");
+            };
+
+            return factory;
         }
     }
 }
