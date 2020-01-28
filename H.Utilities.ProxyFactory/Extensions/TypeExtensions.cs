@@ -28,5 +28,20 @@ namespace H.Utilities.Extensions
 
             return method ?? throw new ArgumentException($"Method \"{name}\" is not found");
         }
+
+        /// <summary>
+        /// Gets FieldInfo or throws exception
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static FieldInfo GetPrivateFieldInfo(this IReflect type, string name)
+        {
+            type = type ?? throw new ArgumentNullException(nameof(type));
+            name = name ?? throw new ArgumentNullException(nameof(name));
+
+            return type.GetField(name, BindingFlags.NonPublic | BindingFlags.Instance)
+                   ?? throw new ArgumentException($"Private field \"{name}\" is not found");
+        }
     }
 }

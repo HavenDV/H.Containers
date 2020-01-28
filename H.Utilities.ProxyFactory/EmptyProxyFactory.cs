@@ -58,8 +58,8 @@ namespace H.Utilities
             var instance = Activator.CreateInstance(type, new object[0])
                                   ?? throw new InvalidOperationException("Created instance is null");
 
-            var proxyFactoryField = GetPrivateField(type, ProxyFactoryFieldName);
-            proxyFactoryField.SetValue(instance, this);
+            type.GetPrivateFieldInfo(ProxyFactoryFieldName)
+                .SetValue(instance, this);
 
             return instance;
         }
@@ -205,8 +205,7 @@ namespace H.Utilities
         public object? OnMethodCalled(List<object?> arguments, object instance, string name)
         {
             var type = instance.GetType();
-            var proxyFactoryField = GetPrivateField(type, ProxyFactoryFieldName);
-            var factory = proxyFactoryField.GetValue(instance) as EmptyProxyFactory
+            var factory = type.GetPrivateFieldInfo(ProxyFactoryFieldName).GetValue(instance) as EmptyProxyFactory
                           ?? throw new InvalidOperationException($"{ProxyFactoryFieldName} is null");
             var allArgumentsNotNull = arguments.All(argument => argument != null);
             var methodInfo = type.GetMethodInfo(name, 
@@ -342,8 +341,7 @@ namespace H.Utilities
         public void OnEventRaised(object instance, object? args, string name)
         {
             var type = instance.GetType();
-            var proxyFactoryField = GetPrivateField(type, ProxyFactoryFieldName);
-            var factory = proxyFactoryField.GetValue(instance) as EmptyProxyFactory
+            var factory = type.GetPrivateFieldInfo(ProxyFactoryFieldName).GetValue(instance) as EmptyProxyFactory
                           ?? throw new InvalidOperationException($"{ProxyFactoryFieldName} is null");
             var eventInfo = type.GetEvent(name)
                             ?? throw new InvalidOperationException("Event is not found");
@@ -356,8 +354,9 @@ namespace H.Utilities
                 return;
             }
 
-            var fieldInfo = GetPrivateField(type, name);
-            var field = fieldInfo?.GetValue(instance);
+            var field = type
+                .GetPrivateFieldInfo(name)
+                .GetValue(instance);
             if (field != null)
             {
                 typeof(EventHandler).GetMethodInfo(nameof(EventHandler.Invoke))
@@ -365,12 +364,6 @@ namespace H.Utilities
             }
 
             factory.EventCompleted?.Invoke(instance, eventEventArgs);
-        }
-
-        private static FieldInfo GetPrivateField(IReflect type, string name)
-        {
-            return type.GetField(name, BindingFlags.NonPublic | BindingFlags.Instance)
-                   ?? throw new InvalidOperationException($"Field \"{name}\" is not found");
         }
 
         #endregion
