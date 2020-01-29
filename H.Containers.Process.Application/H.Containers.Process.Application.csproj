@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="H.Pipes" Version="1.0.11" />
+    <PackageReference Include="H.Pipes" Version="1.0.12" />
   </ItemGroup>
 
   <ItemGroup>
