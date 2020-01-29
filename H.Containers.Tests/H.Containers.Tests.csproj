@@ -8,10 +8,12 @@
   
   <ItemGroup>
     <None Remove="Data\H.NET.Core.dll" />
+    <None Remove="Data\YandexConverter.zip" />
   </ItemGroup>
   
   <ItemGroup>
     <EmbeddedResource Include="Data\H.NET.Core.dll" />
+    <EmbeddedResource Include="Data\YandexConverter.zip" />
   </ItemGroup>
   
   <ItemGroup>
@@ -26,6 +28,12 @@
     <ProjectReference Include="..\H.Containers.AppDomain\H.Containers.AppDomain.csproj" />
     <ProjectReference Include="..\H.Containers.CurrentDomain\H.Containers.CurrentDomain.csproj" />
     <ProjectReference Include="..\H.Containers.Process\H.Containers.Process.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="H.NET.Core">
+      <HintPath>Data\H.NET.Core.dll</HintPath>
+    </Reference>
   </ItemGroup>
   
 </Project>
