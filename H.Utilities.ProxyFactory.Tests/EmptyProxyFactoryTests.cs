@@ -20,6 +20,7 @@ namespace H.Utilities.Tests
             public abstract Task Test3Async(CancellationToken cancellationToken = default);
             public abstract Task<int> Test4Async(CancellationToken cancellationToken = default);
             public abstract void RaiseEvent1();
+            public abstract string[] Test5();
         }
 
         [TestMethod]
@@ -37,6 +38,8 @@ namespace H.Utilities.Tests
             instance.Property1 = 5;
             Assert.AreEqual(0, instance.Property1);
             Assert.AreEqual(0, instance.Property2);
+
+            CollectionAssert.AreEqual(null, instance.Test5());
         }
 
         public interface IBaseInterface
@@ -59,6 +62,7 @@ namespace H.Utilities.Tests
             void Test2();
             Task Test3Async(CancellationToken cancellationToken = default);
             void RaiseEvent2();
+            string[] Test5();
         }
 
         [TestMethod]
@@ -72,6 +76,7 @@ namespace H.Utilities.Tests
                     nameof(IInterface.Test1) => 3,
                     nameof(IInterface.Test4Async) => Task.FromResult(4),
                     "get_" + nameof(IInterface.Property1) => 11,
+                    nameof(IInterface.Test5) => Array.Empty<string>(),
                     _ => args.ReturnObject,
                 };
             };
@@ -99,6 +104,8 @@ namespace H.Utilities.Tests
             instance.RaiseEvent(nameof(IInterface.Event1), EventArgs.Empty);
             instance.RaiseEvent1(); // it's empty
             instance.RaiseEvent2(); // it's empty
+
+            CollectionAssert.AreEqual(Array.Empty<string>(), instance.Test5());
         }
 
         public class CommonClass : IInterface
@@ -142,6 +149,11 @@ namespace H.Utilities.Tests
             {
                 Event2?.Invoke(this, 777);
             }
+
+            public string[] Test5()
+            {
+                return new []{ "1", "2" };
+            }
         }
 
         [TestMethod]
@@ -168,6 +180,8 @@ namespace H.Utilities.Tests
             instance.Property1 = 5;
             Assert.AreEqual(5, instance.Property1);
             Assert.AreEqual(0, instance.Property2);
+
+            CollectionAssert.AreEqual(new[] { "1", "2" }, instance.Test5());
         }
 
         private static EmptyProxyFactory CreateFactory()

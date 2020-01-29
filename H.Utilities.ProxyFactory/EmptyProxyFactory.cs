@@ -398,6 +398,10 @@ namespace H.Utilities
                     .MakeGenericMethod(taskType)
                     .Invoke(null, new []{ value });
             }
+            if (!type.IsValueType)
+            {
+                return null;
+            }
 
             return Activator.CreateInstance(type);
         }
