@@ -100,11 +100,26 @@ namespace H.Utilities
             {
                 typeBuilder.AddInterfaceImplementation(baseType);
             }
+            foreach (var interfaceType in baseType.GetInterfaces())
+            {
+                typeBuilder.AddInterfaceImplementation(interfaceType);
+            }
 
             typeBuilder.DefineField(ProxyFactoryFieldName, typeof(EmptyProxyFactory), FieldAttributes.Private);
 
-            GenerateMethods(typeBuilder, baseType);
-            GenerateEvents(typeBuilder, baseType);
+            foreach (var interfaceType in baseType.GetInterfaces())
+            {
+                GenerateMethods(typeBuilder, interfaceType);
+                GenerateEvents(typeBuilder, interfaceType);
+            }
+
+            for (Type? type = baseType; type != null;)
+            {
+                GenerateMethods(typeBuilder, type);
+                GenerateEvents(typeBuilder, type);
+
+                type = type.BaseType;
+            }
 
             return typeBuilder.CreateType() ?? throw new InvalidOperationException("Created type is null");
         }

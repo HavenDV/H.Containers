@@ -39,19 +39,25 @@ namespace H.Utilities.Tests
             Assert.AreEqual(0, instance.Property2);
         }
 
-        public interface IInterface
+        public interface IBaseInterface
         {
             int Property1 { get; set; }
-            int Property2 { get; }
 
             event EventHandler Event1;
-            event EventHandler<int> Event2;
 
             int Test1(string test);
-            void Test2();
-            Task Test3Async(CancellationToken cancellationToken = default);
             Task<int> Test4Async(CancellationToken cancellationToken = default);
             void RaiseEvent1();
+        }
+
+        public interface IInterface : IBaseInterface
+        {
+            int Property2 { get; }
+
+            event EventHandler<int> Event2;
+
+            void Test2();
+            Task Test3Async(CancellationToken cancellationToken = default);
             void RaiseEvent2();
         }
 
