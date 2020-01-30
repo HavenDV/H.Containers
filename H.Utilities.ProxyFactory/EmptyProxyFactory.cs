@@ -121,7 +121,7 @@ namespace H.Utilities
                 type = type.BaseType;
             }
 
-            return typeBuilder.CreateType() ?? throw new InvalidOperationException("Created type is null");
+            return typeBuilder.CreateTypeInfo() ?? throw new InvalidOperationException("Created type is null");
         }
 
         #region Methods
