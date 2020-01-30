@@ -35,13 +35,15 @@ namespace H.Containers
 
         public void LoadAssembly(string path)
         {
-            var assembly = Assembly.LoadFile(path);
+            var assembly = Assembly.LoadFrom(path);
 
             Assemblies.Add(assembly);
         }
 
         public void CreateObject(string postfix)
         {
+            ////throw new Exception(string.Join(" ", assembly.GetTypes().Select(i => $"{i.FullName}")));
+
             var values = postfix.Split(' ');
             var typeName = values.ElementAtOrDefault(0) ?? throw new InvalidOperationException("Name is null");
             var hash = values.ElementAtOrDefault(1) ?? throw new InvalidOperationException("Hash is null");
