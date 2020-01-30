@@ -170,7 +170,7 @@ namespace H.Utilities
                                   throw new InvalidOperationException("Constructor of list is not found");
             generator.Emit(OpCodes.Newobj, listConstructorInfo); // [list]
 
-            var index = 1; // First argument is type
+            var index = 1; // First argument is this
             var addMethodInfo = typeof(List<object?>).GetMethodInfo(nameof(List<object?>.Add));
             foreach (var parameterInfo in methodInfo.GetParameters())
             {
@@ -255,8 +255,9 @@ namespace H.Utilities
         {
             foreach (var info in baseType.GetEvents())
             {
-                var handlerType = // ReSharper disable once ConstantNullCoalescingCondition
-                    info.EventHandlerType ?? throw new InvalidOperationException("EventHandlerType is null");
+                var handlerType = info.EventHandlerType ?? 
+                                  // ReSharper disable once ConstantNullCoalescingCondition
+                                  throw new InvalidOperationException("EventHandlerType is null");
                 
                 var fieldBuilder = typeBuilder.DefineField(info.Name, handlerType, FieldAttributes.Private);
                 var eventBuilder = typeBuilder.DefineEvent(info.Name, info.Attributes, handlerType);
@@ -295,6 +296,11 @@ namespace H.Utilities
                 removeGenerator.Emit(OpCodes.Ret);
                 eventBuilder.SetRemoveOnMethod(removeMethod);
 
+                var methodInfo = handlerType.GetMethodInfo("Invoke");
+                var parameterTypes = methodInfo
+                    .GetParameters()
+                    .Select(parameter => parameter.ParameterType)
+                    .ToArray();
                 var onMethodBuilder = typeBuilder.DefineMethod($"On{info.Name}",
                     MethodAttributes.Public |
                     MethodAttributes.HideBySig |
@@ -302,25 +308,43 @@ namespace H.Utilities
                     MethodAttributes.Virtual |
                     MethodAttributes.NewSlot,
                     typeof(void),
-                    new []{ typeof(object) });
+                    parameterTypes);
                 
                 var generator = onMethodBuilder.GetILGenerator();
-                GenerateOnEventMethod(generator, info);
+                GenerateOnEventMethod(generator, info, methodInfo);
 
                 eventBuilder.SetRaiseMethod(onMethodBuilder);
             }
         }
 
-        private void GenerateOnEventMethod(ILGenerator generator, EventInfo eventInfo)
+        private void GenerateOnEventMethod(ILGenerator generator, EventInfo eventInfo, MethodInfo methodInfo)
         {
-            generator.Emit(OpCodes.Ldarg_0); // [this]
-            generator.Emit(OpCodes.Ldarg_0); // [this, this]
-            generator.Emit(OpCodes.Ldarg_1); // [this, this, args]
-            generator.Emit(OpCodes.Ldstr, eventInfo.Name); // [this, this, args, name]
+            var listConstructorInfo = typeof(List<object?>).GetConstructor(Array.Empty<Type>()) ??
+                                      throw new InvalidOperationException("Constructor of list is not found");
+            generator.Emit(OpCodes.Newobj, listConstructorInfo); // [list]
+
+            var index = 1; // First argument is this
+            var addMethodInfo = typeof(List<object?>).GetMethodInfo(nameof(List<object?>.Add));
+            foreach (var parameterInfo in methodInfo.GetParameters())
+            {
+                generator.Emit(OpCodes.Dup); // [list, list]
+
+                generator.Emit(OpCodes.Ldarg, index); // [list, list, arg_i]
+                if (parameterInfo.ParameterType.IsValueType)
+                {
+                    generator.Emit(OpCodes.Box, parameterInfo.ParameterType); // [list, list, boxed_arg_i]
+                }
+
+                generator.Emit(OpCodes.Callvirt, addMethodInfo); // [list]
+                index++;
+            }
+
+            generator.Emit(OpCodes.Ldarg_0); // [list, this]
+            generator.Emit(OpCodes.Ldstr, eventInfo.Name); // [list, this, name]
 
             generator.EmitCall(OpCodes.Call,
                 typeof(EmptyProxyFactory).GetMethodInfo(nameof(OnEventRaised)),
-                new[] { typeof(object), typeof(object), typeof(string) });
+                new[] { typeof(List<object?>), typeof(object), typeof(string) });
 
             generator.Emit(OpCodes.Ret);
         }
@@ -338,17 +362,17 @@ namespace H.Utilities
         /// Internal use only
         /// </summary>
         /// <param name="instance"></param>
-        /// <param name="args"></param>
+        /// <param name="arguments"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public void OnEventRaised(object instance, object? args, string name)
+        public static void OnEventRaised(List<object?> arguments, object instance, string name)
         {
             var type = instance.GetType();
             var factory = type.GetPrivateFieldInfo(ProxyFactoryFieldName).GetValue(instance) as EmptyProxyFactory
                           ?? throw new InvalidOperationException($"{ProxyFactoryFieldName} is null");
 
             var eventInfo = type.GetEventInfo(name);
-            var eventEventArgs = new EventEventArgs(args, eventInfo, factory);
+            var eventEventArgs = new EventEventArgs(arguments, eventInfo, factory);
             factory.EventRaised?.Invoke(instance, eventEventArgs);
 
             if (eventEventArgs.IsCanceled)
@@ -364,7 +388,7 @@ namespace H.Utilities
                 // ReSharper disable once ConstantNullCoalescingCondition
                 var handlerType = eventInfo.EventHandlerType ?? throw new InvalidOperationException("HandlerType is null");
                 handlerType.GetMethodInfo(nameof(EventHandler.Invoke))
-                    .Invoke(field, new[] {instance, args});
+                    .Invoke(field, arguments.ToArray());
             }
 
             factory.EventCompleted?.Invoke(instance, eventEventArgs);

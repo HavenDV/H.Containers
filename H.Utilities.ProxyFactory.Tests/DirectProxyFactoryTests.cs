@@ -10,7 +10,7 @@ namespace H.Utilities.Tests
     public class DirectProxyFactoryTests
     {
         [TestMethod]
-        public async Task CommonClassWithInterfaceTest()
+        public async Task CommonClassWithInterfaceMethodsTest()
         {
             var factory = CreateFactory();
             factory.MethodCalled += (sender, args) =>
@@ -30,16 +30,52 @@ namespace H.Utilities.Tests
             var tokenSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
             await Assert.ThrowsExceptionAsync<TaskCanceledException>(
                 async () => await instance.Test4Async(tokenSource.Token));
+        }
+
+        [TestMethod]
+        public void CommonClassWithInterfacePropertiesTest()
+        {
+            var factory = CreateFactory();
+            var instance = factory.CreateInstance<IInterface>(new CommonClass());
 
             Assert.AreEqual(1, instance.Property1);
             instance.Property1 = 5;
             Assert.AreEqual(5, instance.Property1);
             Assert.AreEqual(2, instance.Property2);
+        }
 
-            instance.Event1 += (sender, args) => Console.WriteLine("Event1");
-            instance.Event2 += (sender, args) => Console.WriteLine($"Event2 {args}");
+        [TestMethod]
+        public void CommonClassWithInterfaceEventsTest()
+        {
+            var factory = CreateFactory();
+            var instance = factory.CreateInstance<IInterface>(new CommonClass());
+
+            instance.Event1 += (sender, args) => Console.WriteLine($"Event1: {args}");
+            instance.Event2 += (sender, value) => Console.WriteLine($"Event2: {value}");
+            instance.Event3 += (value) => Console.WriteLine($"Event3: {value}");
             instance.RaiseEvent1();
             instance.RaiseEvent2();
+            instance.RaiseEvent3();
+        }
+
+        [TestMethod]
+        public void CommonClassWithInterfaceEventsCancelTest()
+        {
+            var factory = CreateFactory();
+            var instance = factory.CreateInstance<IInterface>(new CommonClass());
+
+            instance.Event1 += (sender, args) => Assert.Fail("Event should not happen");
+
+            // Cancel test
+            factory.EventRaised += (sender, args) =>
+            {
+                args.IsCanceled = args.EventInfo.Name switch
+                {
+                    nameof(IInterface.Event1) => true,
+                    _ => false,
+                };
+            };
+            instance.RaiseEvent1();
         }
 
         private static DirectProxyFactory CreateFactory()

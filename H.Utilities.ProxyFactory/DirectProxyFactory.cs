@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using H.Utilities.Args;
-using H.Utilities.Extensions;
 
 namespace H.Utilities
 {
@@ -74,23 +73,6 @@ namespace H.Utilities
 
                 MethodCompleted?.Invoke(sender, args);
             };
-            EmptyProxyFactory.EventRaised += (sender, args) =>
-            {
-                if (sender == null)
-                {
-                    return;
-                }
-
-                EventRaised?.Invoke(sender, args);
-
-                if (args.IsCanceled)
-                {
-                    return;
-                }
-
-                EventCompleted?.Invoke(sender, args);
-            };
-
             EmptyProxyFactory.EventRaised += (sender, args) => EventRaised?.Invoke(this, args);
             EmptyProxyFactory.EventCompleted += (sender, args) => EventCompleted?.Invoke(this, args);
         }
@@ -103,20 +85,24 @@ namespace H.Utilities
         /// 
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="internalObj"></param>
+        /// <param name="internalInstance"></param>
         /// <returns></returns>
-        public T CreateInstance<T>(T internalObj) where T : class
+        public T CreateInstance<T>(T internalInstance) where T : class
         {
             var instance = EmptyProxyFactory.CreateInstance<T>();
 
-            Dictionary.Add(instance, internalObj);
+            Dictionary.Add(instance, internalInstance);
 
-            foreach (var eventInfo in internalObj.GetType().GetEvents())
+            foreach (var eventInfo in internalInstance.GetType().GetEvents())
             {
-                internalObj.SubscribeToEvent(eventInfo.Name, (name, obj, args) =>
-                {
-                    instance.RaiseEvent(name, args);
-                });
+                // ReSharper disable once ConstantNullCoalescingCondition
+                var eventHandlerType = eventInfo.EventHandlerType
+                                       ?? throw new InvalidOperationException("Event Handler Type not found");
+                var method = instance.GetType().GetMethod($"On{eventInfo.Name}")
+                             ?? throw new ArgumentException($"On{eventInfo.Name} method is not found");
+                var @delegate = Delegate.CreateDelegate(eventHandlerType, instance, method, true);
+
+                eventInfo.AddEventHandler(internalInstance, @delegate);
             }
 
             return instance;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace H.Utilities.Args
@@ -11,7 +12,7 @@ namespace H.Utilities.Args
         /// <summary>
         /// 
         /// </summary>
-        public object? Args { get; set; }
+        public List<object?> Arguments { get; set; }
 
         /// <summary>
         /// 
@@ -31,12 +32,12 @@ namespace H.Utilities.Args
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="args"></param>
+        /// <param name="arguments"></param>
         /// <param name="eventInfo"></param>
         /// <param name="proxyFactory"></param>
-        public EventEventArgs(object? args, EventInfo eventInfo, EmptyProxyFactory proxyFactory)
+        public EventEventArgs(List<object?> arguments, EventInfo eventInfo, EmptyProxyFactory proxyFactory)
         {
-            Args = args ?? throw new ArgumentNullException(nameof(args));
+            Arguments = arguments ?? throw new ArgumentNullException(nameof(arguments));
             EventInfo = eventInfo ?? throw new ArgumentNullException(nameof(eventInfo));
             ProxyFactory = proxyFactory ?? throw new ArgumentNullException(nameof(proxyFactory));
         }
