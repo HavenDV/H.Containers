@@ -23,7 +23,6 @@ namespace H.Utilities.Tests
         int Property2 { get; }
 
         event EventHandler<int> Event2;
-
         event TextDelegate Event3;
 
         void Test2();

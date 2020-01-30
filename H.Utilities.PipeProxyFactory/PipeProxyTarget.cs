@@ -50,14 +50,21 @@ namespace H.Utilities
             await PipeServer.StartAsync(cancellationToken: cancellationToken);
         }
 
-        private async Task OnExceptionOccurredAsync(Exception exception, CancellationToken cancellationToken = default)
+        private async Task OnFactoryExceptionOccurredAsync(Exception factoryException, CancellationToken cancellationToken = default)
         {
             if (PipeServer == null)
             {
                 return;
             }
 
-            await PipeServer.WriteAsync($"exception {exception.Message} StackTrace: {exception.StackTrace}", cancellationToken);
+            try
+            {
+                await PipeServer.WriteAsync($"exception {factoryException.Message} StackTrace: {factoryException.StackTrace}", cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                OnExceptionOccurred(exception);
+            }
         }
 
         private async Task OnEventOccurredAsync(PipeEventEventArgs args, CancellationToken cancellationToken = default)
@@ -96,7 +103,7 @@ namespace H.Utilities
             }
             catch (Exception exception)
             {
-                await OnExceptionOccurredAsync(exception, cancellationToken);
+                await OnFactoryExceptionOccurredAsync(exception, cancellationToken);
             }
         }
 
@@ -127,8 +134,20 @@ namespace H.Utilities
             {
                 instance.SubscribeToEvent(eventInfo.Name, async (name, args) =>
                 {
-                    await OnEventOccurredAsync(new PipeEventEventArgs(hash, name,
-                        $"H.Containers.Process_{hash}_{name}_Event_{Guid.NewGuid()}", args));
+                    try
+                    {
+                        if (args.ElementAtOrDefault(0) == instance)
+                        {
+                            args[0] = null;
+                        }
+
+                        await OnEventOccurredAsync(new PipeEventEventArgs(hash, name,
+                            $"H.Containers.Process_{hash}_{name}_Event_{Guid.NewGuid()}", args));
+                    }
+                    catch (Exception exception)
+                    {
+                        await OnFactoryExceptionOccurredAsync(exception);
+                    }
                 });
             }
 

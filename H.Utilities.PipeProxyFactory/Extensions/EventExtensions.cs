@@ -1,10 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Linq.Expressions;
 
 namespace H.Utilities.Extensions
 {
@@ -14,19 +10,6 @@ namespace H.Utilities.Extensions
     /// </summary>
     public static class EventExtensions
     {
-        private class SubscribeObject
-        {
-            public string? Name { get; set; }
-            public Action<string, object?[]>? Action { get; set; }
-
-            public void OnEventRaised(List<object?> arguments)
-            {
-                Name = Name ?? throw new InvalidOperationException("Name is null");
-
-                Action?.Invoke(Name, arguments.ToArray());
-            }
-        }
-
         /// <summary>
         /// Subscribes to an event by name and calls the delegate after the event occurs
         /// </summary>
@@ -35,12 +18,6 @@ namespace H.Utilities.Extensions
         /// <param name="action"></param>
         public static void SubscribeToEvent(this object instance, string eventName, Action<string, object?[]> action)
         {
-            /*
-            var subscribeObject = new SubscribeObject
-            {
-                Name = eventName,
-                Action = action,
-            };
             var eventInfo = instance.GetType().GetEvent(eventName)
                             ?? throw new InvalidOperationException("Event info is not found");
             // ReSharper disable once ConstantNullCoalescingCondition
@@ -52,48 +29,19 @@ namespace H.Utilities.Extensions
                 .GetParameters()
                 .Select(parameter => parameter.ParameterType)
                 .ToArray();
-            var onMethod = new DynamicMethod($"On{eventInfo.Name}",
-                MethodAttributes.Public |
-                MethodAttributes.Static,
-                CallingConventions.Standard,
-                typeof(void),
-                parameterTypes,
-                typeof(string).Module,
-                false);
-            var generator = onMethod.GetILGenerator();
 
-            generator.Emit(OpCodes.Ldstr, eventInfo.Name); // [name]
+            var parameters = parameterTypes.Select(Expression.Parameter).ToArray();
+            var handlerExpression = Expression.Lambda(eventInfo.EventHandlerType,
+                Expression.Call(
+                    Expression.Constant(action.Target),
+                    action.Method,
+                    Expression.Constant(eventInfo.Name),
+                    Expression.NewArrayInit(typeof(object),
+                        parameters.Select(
+                            parameter => Expression.Convert(parameter, typeof(object))))),
+                parameters);
 
-            var listConstructorInfo = typeof(List<object?>).GetConstructor(Array.Empty<Type>()) ??
-                                      throw new InvalidOperationException("Constructor of list is not found");
-            generator.Emit(OpCodes.Newobj, listConstructorInfo); // [name, list]
-
-            var index = 1; // First argument is this
-            var addMethodInfo = typeof(List<object?>).GetMethod(nameof(List<object?>.Add)) ??
-                                throw new InvalidOperationException("List.Add is not found");
-            foreach (var parameterInfo in methodInfo.GetParameters())
-            {
-                generator.Emit(OpCodes.Dup); // [name, list, list]
-
-                generator.Emit(OpCodes.Ldarg, index); // [name, list, list, arg_i]
-                if (parameterInfo.ParameterType.IsValueType)
-                {
-                    generator.Emit(OpCodes.Box, parameterInfo.ParameterType); // [name, list, list, boxed_arg_i]
-                }
-
-                generator.Emit(OpCodes.Callvirt, addMethodInfo); // [name, list]
-                index++;
-            }
-
-            generator.EmitCall(OpCodes.Call,
-                action.Method, null);
-
-            generator.Emit(OpCodes.Ret);
-
-            //throw new Exception($"{onMethod.GetType()}             {handlerType}");
-            var @delegate = onMethod.CreateDelegate(handlerType);
-
-            eventInfo.AddEventHandler(instance, @delegate);*/
+            eventInfo.AddEventHandler(instance, handlerExpression.Compile());
         }
     }
 }
