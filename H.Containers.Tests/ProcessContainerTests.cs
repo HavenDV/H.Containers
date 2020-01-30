@@ -86,7 +86,7 @@ namespace H.Containers.Tests
 
             await container.LoadAssemblyAsync(Path.Combine(directory, "YandexConverter.dll"), cancellationTokenSource.Token);
 
-            var instance = await container.CreateObjectAsync<IConverter>("YandexConverter", cancellationTokenSource.Token);
+            var instance = await container.CreateObjectAsync<IConverter>("H.NET.Converters.YandexConverter", cancellationTokenSource.Token);
             Assert.IsNotNull(instance);
 
             try
