@@ -39,7 +39,8 @@ namespace H.Utilities.Tests
                 typeName,
                 async (instance, cancellationToken) =>
                 {
-                    instance.Event1 += (sender, args) => Console.WriteLine($"Hello, I'm the event. My value is {args}");
+                    instance.Event1 += (sender, value) => Console.WriteLine($"Hello, I'm the Event1. My value is {value}");
+                    instance.Event3 += (value) => Console.WriteLine($"Hello, I'm the Event3. My value is {value}");
 
                     await instance.WaitEventAsync<int>(token =>
                     {
@@ -47,6 +48,13 @@ namespace H.Utilities.Tests
 
                         return Task.CompletedTask;
                     }, nameof(instance.Event1), cancellationToken);
+
+                    await instance.WaitEventAsync(token =>
+                    {
+                        instance.RaiseEvent3();
+
+                        return Task.CompletedTask;
+                    }, nameof(instance.Event3), cancellationToken);
                 },
                 cancellationTokenSource.Token);
         }
