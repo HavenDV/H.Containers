@@ -159,19 +159,12 @@ namespace H.Utilities
             var instance = ObjectsDictionary[hash];
             var methodInfo = instance.GetType().GetMethod(name)
                              ?? throw new InvalidOperationException($"Method is not found: {name}");
-            var args = new List<object?>();
-            for (var i = 0; i < methodInfo.GetParameters().Length; i++)
-            {
-                var arg = await Connection.ReceiveAsync<object?>($"{pipeNamePrefix}{i}", cancellationToken);
 
-                args.Add(arg);
-            }
+            var args = await Task.WhenAll(methodInfo.GetParameters()
+                .Select(async (_, i) => 
+                    await Connection.ReceiveAsync<object?>($"{pipeNamePrefix}{i}", cancellationToken)));
 
             var value = methodInfo.Invoke(instance, args.ToArray());
-            if (value == null)
-            {
-                return;
-            }
 
             await Connection.SendAsync($"{pipeNamePrefix}out", value, cancellationToken);
         }

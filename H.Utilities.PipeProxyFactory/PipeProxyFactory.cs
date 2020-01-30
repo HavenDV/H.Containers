@@ -149,15 +149,8 @@ namespace H.Utilities
             var pipeNamePrefix = $"H.Containers.Process_{hash}_{name}_{Guid.NewGuid()}_";
             await PipeClient.WriteAsync($"run_method {name} {hash} {pipeNamePrefix}", cancellationToken).ConfigureAwait(false);
 
-            for (var i = 0; i < args.Length; i++)
-            {
-                await Connection.SendAsync($"{pipeNamePrefix}{i}", args[i], cancellationToken);
-            }
-
-            if (methodInfo.ReturnType == typeof(void))
-            {
-                return null;
-            }
+            await Task.WhenAll(args.Select(async (arg, i) =>
+                await Connection.SendAsync($"{pipeNamePrefix}{i}", arg, cancellationToken)));
 
             return await Connection.ReceiveAsync<object?>($"{pipeNamePrefix}out", cancellationToken);
         }
