@@ -17,12 +17,12 @@ namespace H.Utilities.Tests
             {
                 args.IsCanceled = args.MethodInfo.Name switch
                 {
-                    nameof(EmptyProxyFactoryTests.IInterface.Test2) => true,
-                    nameof(EmptyProxyFactoryTests.IInterface.Test3Async) => true,
+                    nameof(IInterface.Test2) => true,
+                    nameof(IInterface.Test3Async) => true,
                     _ => false,
                 };
             };
-            var instance = factory.CreateInstance<EmptyProxyFactoryTests.IInterface>(new EmptyProxyFactoryTests.CommonClass());
+            var instance = factory.CreateInstance<IInterface>(new CommonClass());
 
             Assert.AreEqual(1, instance.Test1("hello"));
             instance.Test2();
