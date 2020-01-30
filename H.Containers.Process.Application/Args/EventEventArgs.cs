@@ -25,17 +25,17 @@ namespace H.Containers.Args
         /// <summary>
         /// 
         /// </summary>
-        public object? Args { get; set; }
+        public object?[] Args { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public EventEventArgs(string hash, string eventName, string pipeName, object? args)
+        public EventEventArgs(string hash, string eventName, string pipeName, object?[] args)
         {
             Hash = hash ?? throw new ArgumentNullException(nameof(hash));
             EventName = eventName ?? throw new ArgumentNullException(nameof(eventName));
             PipeName = pipeName ?? throw new ArgumentNullException(nameof(pipeName));
-            Args = args;
+            Args = args ?? throw new ArgumentNullException(nameof(args));
         }
     }
 }

@@ -297,14 +297,18 @@ namespace H.Containers
 
         private async Task OnEventAsync(string eventName, string hash, string pipeName, CancellationToken cancellationToken = default)
         {
-            await using var server = new SingleConnectionPipeServer<object?>(pipeName);
+            await using var server = new SingleConnectionPipeServer<object?[]>(pipeName);
 
             var messageReceivedArgs = await server.WaitEventAsync(
                 async token => await server.StartAsync(cancellationToken: token),
                 nameof(server.MessageReceived),
-                cancellationToken) as ConnectionMessageEventArgs<object?>;
+                cancellationToken) as ConnectionMessageEventArgs<object?[]>;
+            if (messageReceivedArgs == null)
+            {
+                throw new InvalidOperationException($"WaitEventAsync for event \"{eventName}\" returns null");
+            }
 
-            var args = messageReceivedArgs?.Message;
+            var args = messageReceivedArgs.Message;
             var instance = HashDictionary[hash];
             instance.RaiseEvent(eventName, args);
         }

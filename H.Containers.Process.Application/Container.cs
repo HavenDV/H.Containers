@@ -55,7 +55,7 @@ namespace H.Containers
 
             foreach (var eventInfo in instance.GetType().GetEvents())
             {
-                instance.SubscribeToEvent(eventInfo.Name, (name, obj, args) =>
+                instance.SubscribeToEvent(eventInfo.Name, (name, args) =>
                 {
                     OnEventOccurred(new EventEventArgs(hash, name, 
                         $"H.Containers.Process_{hash}_{name}_Event_{Guid.NewGuid()}", args));
