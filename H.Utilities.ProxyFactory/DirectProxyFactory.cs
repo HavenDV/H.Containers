@@ -74,6 +74,23 @@ namespace H.Utilities
 
                 MethodCompleted?.Invoke(sender, args);
             };
+            EmptyProxyFactory.EventRaised += (sender, args) =>
+            {
+                if (sender == null)
+                {
+                    return;
+                }
+
+                EventRaised?.Invoke(sender, args);
+
+                if (args.IsCanceled)
+                {
+                    return;
+                }
+
+                EventCompleted?.Invoke(sender, args);
+            };
+
             EmptyProxyFactory.EventRaised += (sender, args) => EventRaised?.Invoke(this, args);
             EmptyProxyFactory.EventCompleted += (sender, args) => EventCompleted?.Invoke(this, args);
         }
