@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using H.Pipes;
-using H.Pipes.Args;
+using H.Pipes.Extensions;
 using H.Utilities.Args;
 using H.Utilities.Extensions;
 
@@ -14,22 +13,41 @@ namespace H.Utilities
 {
     public sealed class PipeProxyTarget : IDisposable
     {
+        #region Properties
+
         private SingleConnectionPipeServer<string>? PipeServer { get; set; }
+        private List<Assembly> Assemblies { get; } = AppDomain.CurrentDomain.GetAssemblies().ToList();
+        private Dictionary<string, object> ObjectsDictionary { get; } = new Dictionary<string, object>();
+
+        #endregion
+
+        #region Events
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public event EventHandler<Exception>? ExceptionOccurred;
+
+        private void OnExceptionOccurred(Exception exception)
+        {
+            ExceptionOccurred?.Invoke(this, exception);
+        }
+
+        #endregion
 
         public async Task InitializeAsync(string name, CancellationToken cancellationToken = default)
         {
             PipeServer = new SingleConnectionPipeServer<string>(name);
-            await using var server = PipeServer;
-            server.MessageReceived += async (sender, args) =>
+            PipeServer.MessageReceived += async (sender, args) =>
             {
                 await OnMessageReceivedAsync(args.Message);
             };
-            server.ExceptionOccurred += (sender, args) =>
+            PipeServer.ExceptionOccurred += (sender, args) =>
             {
-                Console.Error.WriteLine($"Server Exception: {args.Exception}");
+                OnExceptionOccurred(args.Exception);
             };
 
-            await server.StartAsync(cancellationToken: cancellationToken);
+            await PipeServer.StartAsync(cancellationToken: cancellationToken);
         }
 
         private async Task OnExceptionOccurredAsync(Exception exception, CancellationToken cancellationToken = default)
@@ -83,13 +101,6 @@ namespace H.Utilities
         }
 
 
-        #region Properties
-
-        private List<Assembly> Assemblies { get; } = new List<Assembly>();
-        private Dictionary<string, object> ObjectsDictionary { get; } = new Dictionary<string, object>();
-
-        #endregion
-
         #region Public methods
 
         public void LoadAssembly(string path)
@@ -111,7 +122,7 @@ namespace H.Utilities
                                i.GetTypes().Any(type => type.FullName == typeName))
                            ?? throw new InvalidOperationException($"Assembly with type \"{typeName}\" is not loaded");
             var instance = assembly.CreateInstance(typeName) ?? throw new InvalidOperationException("Instance is null");
-
+            
             foreach (var eventInfo in instance.GetType().GetEvents())
             {
                 instance.SubscribeToEvent(eventInfo.Name, async (name, args) =>
@@ -140,12 +151,11 @@ namespace H.Utilities
                 var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
                 await using var server = new SingleConnectionPipeServer<object?>($"{pipeNamePrefix}{i}");
 
-                var messageReceivedArgs = await server.WaitEventAsync(
+                var messageReceivedArgs = await server.WaitMessageAsync(
                     async token => await server.StartAsync(cancellationToken: token),
-                    nameof(server.MessageReceived),
-                    tokenSource.Token) as ConnectionMessageEventArgs<object>;
+                    tokenSource.Token);
 
-                args.Add(messageReceivedArgs?.Message);
+                args.Add(messageReceivedArgs.Message);
             }
 
             var value = methodInfo.Invoke(instance, args.ToArray());
@@ -186,6 +196,8 @@ namespace H.Utilities
             }
 
             ObjectsDictionary.Clear();
+
+            PipeServer?.Dispose();
         }
 
         #endregion

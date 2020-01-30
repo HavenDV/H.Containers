@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using H.Pipes;
-using H.Pipes.Args;
+using H.Pipes.Extensions;
 using H.Utilities.Args;
 using H.Utilities.Extensions;
 
@@ -14,7 +14,7 @@ namespace H.Utilities
     /// <summary>
     /// 
     /// </summary>
-    public sealed class PipeProxyFactory
+    public sealed class PipeProxyFactory : IDisposable
     {
         #region Properties
 
@@ -130,6 +130,11 @@ namespace H.Utilities
             return instance;
         }
 
+        public void Dispose()
+        {
+            PipeClient?.Dispose();
+        }
+
         #endregion
 
         #region Private methods
@@ -162,12 +167,11 @@ namespace H.Utilities
 
             await using var server = new SingleConnectionPipeServer<object?>($"{pipeNamePrefix}out");
 
-            var messageReceivedArgs = await server.WaitEventAsync(
+            var messageReceivedArgs = await server.WaitMessageAsync(
                 async token => await server.StartAsync(cancellationToken: token),
-                nameof(server.MessageReceived),
-                cancellationToken) as ConnectionMessageEventArgs<object>;
+                cancellationToken);
 
-            return messageReceivedArgs?.Message;
+            return messageReceivedArgs.Message;
         }
 
         private void OnMessageReceived(string message)
@@ -217,14 +221,9 @@ namespace H.Utilities
         {
             await using var server = new SingleConnectionPipeServer<object?[]>(pipeName);
 
-            var messageReceivedArgs = await server.WaitEventAsync(
+            var messageReceivedArgs = await server.WaitMessageAsync(
                 async token => await server.StartAsync(cancellationToken: token),
-                nameof(server.MessageReceived),
-                cancellationToken) as ConnectionMessageEventArgs<object?[]>;
-            if (messageReceivedArgs == null)
-            {
-                throw new InvalidOperationException($"WaitEventAsync for event \"{eventName}\" returns null");
-            }
+                cancellationToken);
 
             var args = messageReceivedArgs.Message;
             var instance = HashDictionary[hash];
