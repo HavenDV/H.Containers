@@ -3,15 +3,16 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using H.Containers.Args;
+using H.Containers.Extensions;
 using H.Pipes;
+using H.Utilities;
 
 namespace H.Containers
 {
     internal static class Program
     {
         private static bool IsStopped { get; set; }
-        private static Container Container { get; } = new Container();
+        private static PipeProxyTarget PipeProxyTarget { get; } = new PipeProxyTarget();
         private static SingleConnectionPipeServer<string>? PipeServer { get; set; }
 
         private static async Task OnExceptionOccurredAsync(Exception exception, CancellationToken cancellationToken = default)
@@ -24,22 +25,6 @@ namespace H.Containers
             await PipeServer.WriteAsync($"exception {exception.Message} StackTrace: {exception.StackTrace}", cancellationToken);
         }
 
-        private static async Task OnEventOccurredAsync(EventEventArgs args, CancellationToken cancellationToken = default)
-        {
-            if (PipeServer == null)
-            {
-                return;
-            }
-
-            await PipeServer.WriteAsync($"raise_event {args.Hash} {args.EventName} {args.PipeName}", cancellationToken);
-
-            await using var client = new SingleConnectionPipeClient<object?>(args.PipeName);
-
-            await client.ConnectAsync(cancellationToken);
-
-            await client.WriteAsync(args.Args, cancellationToken);
-        }
-
         [MTAThread]
         private static async Task Main(string[] arguments)
         {
@@ -49,26 +34,23 @@ namespace H.Containers
                 return;
             }
 
-            var prefix = arguments.ElementAt(0);
+            var name = arguments.ElementAt(0);
 
-            PipeServer = new SingleConnectionPipeServer<string>(prefix);
-            await using var server = PipeServer;
-            server.MessageReceived += async (sender, args) =>
+            PipeServer = new SingleConnectionPipeServer<string>(name);
+            PipeServer.MessageReceived += async (sender, args) =>
             {
                 await OnMessageReceivedAsync(args.Message);
             };
-            server.ExceptionOccurred += (sender, args) =>
+            PipeServer.ExceptionOccurred += (sender, args) =>
             {
                 Console.Error.WriteLine($"Server Exception: {args.Exception}");
             };
-            Container.EventOccurred += async (sender, args) =>
-            {
-                await OnEventOccurredAsync(args);
-            };
-            await server.StartAsync();
 
             try
             {
+                await PipeServer.StartAsync();
+                await PipeProxyTarget.InitializeAsync($"{name}_ProxyFactoryPipe");
+
                 while (!IsStopped && (parent == null || !parent.HasExited))
                 {
                     await Task.Delay(TimeSpan.FromMilliseconds(1));
@@ -76,7 +58,8 @@ namespace H.Containers
             }
             finally
             {
-                Container.Dispose();
+                PipeProxyTarget.Dispose();
+                await PipeServer.DisposeAsync();
             }
         }
 
@@ -94,15 +77,15 @@ namespace H.Containers
                         break;
 
                     case "load_assembly":
-                        Container.LoadAssembly(postfix);
+                        PipeProxyTarget.LoadAssembly(postfix);
                         break;
 
                     case "create_object":
-                        Container.CreateObject(postfix);
+                        PipeProxyTarget.CreateObject(postfix);
                         break;
 
                     case "run_method":
-                        await Container.RunMethod(postfix, cancellationToken);
+                        await PipeProxyTarget.RunMethodAsync(postfix, cancellationToken);
                         break;
                 }
             }

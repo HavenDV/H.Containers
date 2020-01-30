@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace H.Containers
+namespace H.Containers.Extensions
 {
     /// <summary>
     /// A utility class to determine a process parent.
