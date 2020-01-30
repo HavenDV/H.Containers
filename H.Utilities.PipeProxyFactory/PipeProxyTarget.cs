@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using H.Pipes;
-using H.Pipes.Extensions;
 using H.Utilities.Args;
 using H.Utilities.Extensions;
 
@@ -76,11 +75,7 @@ namespace H.Utilities
 
             await PipeServer.WriteAsync($"raise_event {args.Hash} {args.EventName} {args.PipeName}", cancellationToken);
 
-            await using var client = new SingleConnectionPipeClient<object?>(args.PipeName);
-
-            await client.ConnectAsync(cancellationToken);
-
-            await client.WriteAsync(args.Args, cancellationToken);
+            await Connection.SendAsync(args.PipeName, args.Args, cancellationToken);
         }
 
         private async Task OnMessageReceivedAsync(string message, CancellationToken cancellationToken = default)
@@ -167,14 +162,9 @@ namespace H.Utilities
             var args = new List<object?>();
             for (var i = 0; i < methodInfo.GetParameters().Length; i++)
             {
-                var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                await using var server = new SingleConnectionPipeServer<object?>($"{pipeNamePrefix}{i}");
+                var arg = await Connection.ReceiveAsync<object?>($"{pipeNamePrefix}{i}", cancellationToken);
 
-                var messageReceivedArgs = await server.WaitMessageAsync(
-                    async token => await server.StartAsync(cancellationToken: token),
-                    tokenSource.Token);
-
-                args.Add(messageReceivedArgs.Message);
+                args.Add(arg);
             }
 
             var value = methodInfo.Invoke(instance, args.ToArray());
@@ -183,11 +173,7 @@ namespace H.Utilities
                 return;
             }
 
-            await using var client = new SingleConnectionPipeClient<object?>($"{pipeNamePrefix}out");
-
-            await client.ConnectAsync(cancellationToken);
-
-            await client.WriteAsync(value, cancellationToken);
+            await Connection.SendAsync($"{pipeNamePrefix}out", value, cancellationToken);
         }
 
         #endregion

@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using H.Pipes;
-using H.Pipes.Extensions;
 using H.Utilities.Args;
 using H.Utilities.Extensions;
 
@@ -152,12 +151,7 @@ namespace H.Utilities
 
             for (var i = 0; i < args.Length; i++)
             {
-                var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                await using var client = new SingleConnectionPipeClient<object?>($"{pipeNamePrefix}{i}");
-
-                await client.ConnectAsync(tokenSource.Token);
-
-                await client.WriteAsync(args[i], tokenSource.Token);
+                await Connection.SendAsync($"{pipeNamePrefix}{i}", args[i], cancellationToken);
             }
 
             if (methodInfo.ReturnType == typeof(void))
@@ -165,13 +159,7 @@ namespace H.Utilities
                 return null;
             }
 
-            await using var server = new SingleConnectionPipeServer<object?>($"{pipeNamePrefix}out");
-
-            var messageReceivedArgs = await server.WaitMessageAsync(
-                async token => await server.StartAsync(cancellationToken: token),
-                cancellationToken);
-
-            return messageReceivedArgs.Message;
+            return await Connection.ReceiveAsync<object?>($"{pipeNamePrefix}out", cancellationToken);
         }
 
         private void OnMessageReceived(string message)
@@ -219,13 +207,7 @@ namespace H.Utilities
 
         private async Task OnEventAsync(string eventName, string hash, string pipeName, CancellationToken cancellationToken = default)
         {
-            await using var server = new SingleConnectionPipeServer<object?[]>(pipeName);
-
-            var messageReceivedArgs = await server.WaitMessageAsync(
-                async token => await server.StartAsync(cancellationToken: token),
-                cancellationToken);
-
-            var args = messageReceivedArgs.Message;
+            var args = await Connection.ReceiveAsync<object?[]>(pipeName, cancellationToken);
             var instance = HashDictionary[hash];
             instance.RaiseEvent(eventName, args);
         }
