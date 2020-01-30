@@ -12,6 +12,7 @@ namespace H.Containers.Tests
     [TestClass]
     public class ProcessContainerTests
     {
+        /*
         [TestMethod]
         public async Task StartTest()
         {
@@ -130,6 +131,6 @@ namespace H.Containers.Tests
             {
                 return $"Hello, input = {input}";
             }
-        }
+        }*/
     }
 }
