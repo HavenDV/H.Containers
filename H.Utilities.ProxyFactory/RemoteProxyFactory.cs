@@ -16,6 +16,8 @@ namespace H.Utilities
     {
         #region Properties
 
+        public List<string> LoadedAssemblies { get; } = new List<string>();
+
         private IConnection Connection { get; }
         private EmptyProxyFactory EmptyProxyFactory { get; } = new EmptyProxyFactory();
         private Dictionary<string, object> HashDictionary { get; } = new Dictionary<string, object>();
@@ -48,6 +50,11 @@ namespace H.Utilities
         /// 
         /// </summary>
         public event EventHandler<Exception>? ExceptionOccurred;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public event EventHandler<string>? MessageReceived;
 
         private void OnExceptionOccurred(Exception exception)
         {
@@ -116,6 +123,22 @@ namespace H.Utilities
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="path"></param>
+        /// <param name="cancellationToken"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <returns></returns>
+        public async Task LoadAssemblyAsync(string path, CancellationToken cancellationToken = default)
+        {
+            path = path ?? throw new ArgumentNullException(nameof(path));
+
+            await Connection.SendMessageAsync($"load_assembly {path}", cancellationToken).ConfigureAwait(false);
+
+            LoadedAssemblies.Add(path);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="typeName"></param>
         /// <param name="cancellationToken"></param>
@@ -148,6 +171,11 @@ namespace H.Utilities
 
         private static string GetHash(object instance) => $"{instance.GetHashCode()}";
 
+        public async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
+        {
+            await Connection.SendMessageAsync(message, cancellationToken).ConfigureAwait(false);
+        }
+
         private async Task<object?> RunMethodAsync(MethodInfo methodInfo, object instance, object?[] args, CancellationToken cancellationToken = default)
         {
             var hash = GetHash(instance);
@@ -167,6 +195,8 @@ namespace H.Utilities
             try
             {
                 message = message ?? throw new ArgumentNullException(nameof(message));
+
+                MessageReceived?.Invoke(this, message);
 
                 var prefix = message.Split(' ').First();
                 var postfix = message.Replace(prefix, string.Empty).TrimStart();

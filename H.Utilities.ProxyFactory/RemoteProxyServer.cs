@@ -29,9 +29,19 @@ namespace H.Utilities
         /// </summary>
         public event EventHandler<Exception>? ExceptionOccurred;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public event EventHandler<string>? MessageReceived;
+
         private void OnExceptionOccurred(Exception exception)
         {
             ExceptionOccurred?.Invoke(this, exception);
+        }
+
+        private void OnMessageReceived(string message)
+        {
+            MessageReceived?.Invoke(this, message);
         }
 
         #endregion
@@ -68,7 +78,12 @@ namespace H.Utilities
             await Connection.InitializeAsync(name, cancellationToken);
         }
 
-        private async Task OnFactoryExceptionOccurredAsync(Exception factoryException, CancellationToken cancellationToken = default)
+        public async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
+        {
+            await Connection.SendMessageAsync(message, cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task SendExceptionAsync(Exception factoryException, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -93,11 +108,19 @@ namespace H.Utilities
         {
             try
             {
+                message = message ?? throw new ArgumentNullException(nameof(message));
+
+                OnMessageReceived(message);
+
                 var prefix = message.Split(' ').First();
                 var postfix = message.Replace(prefix, string.Empty).TrimStart();
 
                 switch (prefix)
                 {
+                    case "load_assembly":
+                        LoadAssembly(postfix);
+                        break;
+
                     case "create_object":
                         CreateObject(postfix);
                         break;
@@ -109,7 +132,7 @@ namespace H.Utilities
             }
             catch (Exception exception)
             {
-                await OnFactoryExceptionOccurredAsync(exception, cancellationToken);
+                await SendExceptionAsync(exception, cancellationToken);
             }
         }
 
@@ -160,7 +183,7 @@ namespace H.Utilities
                     }
                     catch (Exception exception)
                     {
-                        await OnFactoryExceptionOccurredAsync(exception);
+                        await SendExceptionAsync(exception);
                     }
                 });
             }
