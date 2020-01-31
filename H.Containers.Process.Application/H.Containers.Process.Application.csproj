@@ -9,15 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="H.Pipes" Version="1.0.12" />
+    <ProjectReference Include="..\H.Utilities.PipeProxyFactory\H.Utilities.PipeProxyFactory.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <ZipFiles Include="$(ProjectDir)bin\*.zip" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\H.Utilities.PipeProxyFactory\H.Utilities.PipeProxyFactory.csproj" />
   </ItemGroup>
 
   <Target Name="CreateReleaseZip" AfterTargets="AfterBuild">

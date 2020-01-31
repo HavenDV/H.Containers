@@ -12,7 +12,7 @@ namespace H.Containers
     internal static class Program
     {
         private static bool IsStopped { get; set; }
-        private static PipeProxyTarget PipeProxyTarget { get; } = new PipeProxyTarget();
+        private static PipeProxyServer ProxyServer { get; } = new PipeProxyServer();
         private static SingleConnectionPipeServer<string>? PipeServer { get; set; }
 
         private static async Task OnExceptionOccurredAsync(Exception exception, CancellationToken cancellationToken = default)
@@ -49,7 +49,7 @@ namespace H.Containers
             try
             {
                 await PipeServer.StartAsync();
-                await PipeProxyTarget.InitializeAsync($"{name}_ProxyFactoryPipe");
+                await ProxyServer.InitializeAsync($"{name}_ProxyFactoryPipe");
 
                 while (!IsStopped && (parent == null || !parent.HasExited))
                 {
@@ -58,7 +58,7 @@ namespace H.Containers
             }
             finally
             {
-                PipeProxyTarget.Dispose();
+                ProxyServer.Dispose();
                 await PipeServer.DisposeAsync();
             }
         }
@@ -77,15 +77,15 @@ namespace H.Containers
                         break;
 
                     case "load_assembly":
-                        PipeProxyTarget.LoadAssembly(postfix);
+                        ProxyServer.LoadAssembly(postfix);
                         break;
 
                     case "create_object":
-                        PipeProxyTarget.CreateObject(postfix);
+                        ProxyServer.CreateObject(postfix);
                         break;
 
                     case "run_method":
-                        await PipeProxyTarget.RunMethodAsync(postfix, cancellationToken);
+                        await ProxyServer.RunMethodAsync(postfix, cancellationToken);
                         break;
                 }
             }
