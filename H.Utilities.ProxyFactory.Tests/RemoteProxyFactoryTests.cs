@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using H.Utilities.Tests.Extensions;
@@ -15,15 +14,10 @@ namespace H.Utilities.Tests
         {
             using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-            var factoryMessagesQueue = new ConcurrentQueue<string>();
-            var serverMessagesQueue = new ConcurrentQueue<string>();
-            var dictionary = new ConcurrentDictionary<string, object?>();
             var typeName = typeof(SimpleEventClass).FullName ??
                            throw new InvalidOperationException("Type name is null");
             await BaseTests.BaseInstanceRemoteTestAsync<ISimpleEventClass>(
                 typeName,
-                new TestConnection(factoryMessagesQueue, serverMessagesQueue, dictionary),
-                new TestConnection(serverMessagesQueue, factoryMessagesQueue, dictionary),
                 (instance, cancellationToken) =>
                 {
                     Assert.AreEqual(321 + 123, instance.Method1(123));
@@ -39,15 +33,10 @@ namespace H.Utilities.Tests
         {
             using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-            var factoryMessagesQueue = new ConcurrentQueue<string>();
-            var serverMessagesQueue = new ConcurrentQueue<string>();
-            var dictionary = new ConcurrentDictionary<string, object?>();
             var typeName = typeof(SimpleEventClass).FullName ??
                            throw new InvalidOperationException("Type name is null");
             await BaseTests.BaseInstanceRemoteTestAsync<ISimpleEventClass>(
                 typeName,
-                new TestConnection(factoryMessagesQueue, serverMessagesQueue, dictionary),
-                new TestConnection(serverMessagesQueue, factoryMessagesQueue, dictionary),
                 async (instance, cancellationToken) =>
                 {
                     instance.Event1 += (sender, value) =>
@@ -76,6 +65,24 @@ namespace H.Utilities.Tests
                     Assert.IsNotNull(event2Values);
                     Assert.AreEqual(1, event2Values.Length);
                     Assert.AreEqual("555", event2Values[0]);
+                },
+                cancellationTokenSource.Token);
+        }
+
+        [TestMethod]
+        public async Task AsyncMethodsTest()
+        {
+            using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+            var typeName = typeof(CommonClass).FullName ??
+                                  throw new InvalidOperationException("Type name is null");
+            await BaseTests.BaseInstanceRemoteTestAsync<IInterface>(
+                typeName,
+                async (instance, cancellationToken) =>
+                {
+                    await instance.Test3Async(cancellationToken);
+
+                    Assert.AreEqual(4, await instance.Test4Async(cancellationToken));
                 },
                 cancellationTokenSource.Token);
         }
