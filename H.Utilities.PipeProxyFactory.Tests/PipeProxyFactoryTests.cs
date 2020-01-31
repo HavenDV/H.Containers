@@ -39,22 +39,32 @@ namespace H.Utilities.Tests
                 typeName,
                 async (instance, cancellationToken) =>
                 {
-                    instance.Event1 += (sender, value) => Console.WriteLine($"Hello, I'm the Event1. My value is {value}");
-                    instance.Event3 += (value) => Console.WriteLine($"Hello, I'm the Event3. My value is {value}");
+                    instance.Event1 += (sender, value) =>
+                    {
+                        Console.WriteLine($"Hello, I'm the Event1. My value is {value}");
+                    };
+                    instance.Event3 += (value) =>
+                    {
+                        Console.WriteLine($"Hello, I'm the Event3. My value is {value}");
+                    };
 
-                    await instance.WaitEventAsync<int>(token =>
+                    var event1Value = await instance.WaitEventAsync<int>(token =>
                     {
                         instance.RaiseEvent1();
 
                         return Task.CompletedTask;
                     }, nameof(instance.Event1), cancellationToken);
+                    Assert.AreEqual(777, event1Value);
 
-                    await instance.WaitEventAsync(token =>
+                    var event2Values = await instance.WaitEventAsync(token =>
                     {
                         instance.RaiseEvent3();
 
                         return Task.CompletedTask;
                     }, nameof(instance.Event3), cancellationToken);
+                    Assert.IsNotNull(event2Values);
+                    Assert.AreEqual(1, event2Values.Length);
+                    Assert.AreEqual("555", event2Values[0]);
                 },
                 cancellationTokenSource.Token);
         }
