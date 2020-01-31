@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using H.Pipes;
 using H.Pipes.Extensions;
+using H.Utilities.Extensions;
 
 namespace H.Utilities
 {
@@ -96,8 +97,7 @@ namespace H.Utilities
         public async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
         {
             using var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            // ReSharper disable once AccessToDisposedClosure
-            cancellationToken.Register(() => tokenSource.Cancel());
+            cancellationToken.RegisterSource(tokenSource);
 
             InternalConnection = InternalConnection ?? throw new InvalidOperationException("InternalConnection is null");
 
@@ -115,8 +115,7 @@ namespace H.Utilities
         public async Task SendAsync<T>(string name, T value, CancellationToken cancellationToken = default)
         {
             using var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            // ReSharper disable once AccessToDisposedClosure
-            cancellationToken.Register(() => tokenSource.Cancel());
+            cancellationToken.RegisterSource(tokenSource);
 
             await using var client = new SingleConnectionPipeClient<object?>(name);
 
@@ -135,9 +134,8 @@ namespace H.Utilities
         public async Task<T> ReceiveAsync<T>(string name, CancellationToken cancellationToken = default)
         {
             using var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            // ReSharper disable once AccessToDisposedClosure
-            cancellationToken.Register(() => tokenSource.Cancel());
-            
+            cancellationToken.RegisterSource(tokenSource);
+
             await using var server = new SingleConnectionPipeServer<T>(name);
 
             var args = await server.WaitMessageAsync(
