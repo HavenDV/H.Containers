@@ -12,15 +12,19 @@ namespace H.Containers.Tests
     [TestClass]
     public class ProcessContainerTests
     {
+        [TestInitialize]
+        public void TestInitialize()
+        {
+            Application.Clear();
+            Application.GetPathAndUnpackIfRequired();
+        }
+
         [TestMethod]
         public async Task StartTest()
         {
             var receivedException = (Exception?) null;
             using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            await using var container = new ProcessContainer(nameof(ProcessContainerTests))
-            {
-                ForceUpdateApplication = true,
-            };
+            await using var container = new ProcessContainer(nameof(ProcessContainerTests));
             container.ExceptionOccurred += (sender, exception) =>
             {
                 Console.WriteLine($"ExceptionOccurred: {exception}");
@@ -60,10 +64,7 @@ namespace H.Containers.Tests
         {
             var receivedException = (Exception?)null;
             using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            await using var container = new ProcessContainer(nameof(ProcessContainerTests))
-            {
-                ForceUpdateApplication = true,
-            };
+            await using var container = new ProcessContainer(nameof(ProcessContainerTests));
             container.ExceptionOccurred += (sender, exception) =>
             {
                 Console.WriteLine($"ExceptionOccurred: {exception}");
