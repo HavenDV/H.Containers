@@ -2,8 +2,17 @@
 
 namespace H.Utilities.Extensions
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public static class ObjectExtensions
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="eventName"></param>
+        /// <param name="args"></param>
         public static void RaiseEvent(this object obj, string eventName, object?[] args)
         {
             obj = obj ?? throw new ArgumentNullException(nameof(obj));

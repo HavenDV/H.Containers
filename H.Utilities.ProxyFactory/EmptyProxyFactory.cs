@@ -21,6 +21,9 @@ namespace H.Utilities
     {
         #region Constants
 
+        /// <summary>
+        /// 
+        /// </summary>
         public const string ProxyFactoryFieldName = "_proxyFactory";
 
         #endregion

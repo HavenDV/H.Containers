@@ -98,6 +98,12 @@ namespace H.Utilities
 
         #region Public methods
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task InitializeAsync(string name, CancellationToken cancellationToken = default)
         {
             PipeClient = new SingleConnectionPipeClient<string>(name);
@@ -129,6 +135,9 @@ namespace H.Utilities
             return instance;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void Dispose()
         {
             PipeClient?.Dispose();

@@ -8,11 +8,21 @@ using H.Utilities;
 
 namespace H.Containers
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public sealed class ProcessContainer : IContainer, IAsyncDisposable
     {
         #region Properties
 
+        /// <summary>
+        /// 
+        /// </summary>
         public string Name { get; }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public bool ForceUpdateApplication { get; set; }
 
         private System.Diagnostics.Process? Process { get; set; }
@@ -24,6 +34,9 @@ namespace H.Containers
 
         #region Events
 
+        /// <summary>
+        /// 
+        /// </summary>
         public event EventHandler<Exception>? ExceptionOccurred;
 
         private void OnExceptionOccurred(Exception exception)
@@ -35,6 +48,10 @@ namespace H.Containers
 
         #region Constructors
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="name"></param>
         public ProcessContainer(string name)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -45,6 +62,11 @@ namespace H.Containers
 
         #region Public methods
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public Task InitializeAsync(CancellationToken cancellationToken = default)
         {
             if (ForceUpdateApplication)
@@ -57,6 +79,11 @@ namespace H.Containers
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task StartAsync(CancellationToken cancellationToken = default)
         {
             var path = Application.GetPathAndUnpackIfRequired();
@@ -95,6 +122,12 @@ namespace H.Containers
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task LoadAssemblyAsync(string path, CancellationToken cancellationToken = default)
         {
             path = path ?? throw new ArgumentNullException(nameof(path));
@@ -105,6 +138,13 @@ namespace H.Containers
             LoadedAssemblies.Add(path);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="typeName"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<T> CreateObjectAsync<T>(string typeName, CancellationToken cancellationToken = default) 
             where T : class
         {
@@ -113,6 +153,13 @@ namespace H.Containers
             return await ProxyFactory.CreateInstanceAsync<T>(typeName, cancellationToken);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="type"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<T> CreateObjectAsync<T>(Type type, CancellationToken cancellationToken = default)
             where T : class
         {
@@ -130,6 +177,11 @@ namespace H.Containers
                 cancellationToken);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public Task<Type[]> GetTypesAsync(CancellationToken cancellationToken = default)
         {
             return Task.FromResult(new Type[0]);
@@ -195,11 +247,18 @@ namespace H.Containers
 
         #region IDisposable
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void Dispose()
         {
             StopAsync().Wait();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public async ValueTask DisposeAsync()
         {
             await StopAsync();

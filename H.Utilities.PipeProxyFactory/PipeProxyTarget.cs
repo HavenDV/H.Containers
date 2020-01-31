@@ -9,6 +9,9 @@ using H.Utilities.Extensions;
 
 namespace H.Utilities
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public sealed class PipeProxyTarget : IDisposable
     {
         #region Properties
@@ -33,6 +36,12 @@ namespace H.Utilities
 
         #endregion
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task InitializeAsync(string name, CancellationToken cancellationToken = default)
         {
             PipeServer = new SingleConnectionPipeServer<string>(name);
@@ -106,6 +115,10 @@ namespace H.Utilities
 
         #region Public methods
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="path"></param>
         public void LoadAssembly(string path)
         {
             var assembly = Assembly.LoadFrom(path);
@@ -113,6 +126,10 @@ namespace H.Utilities
             Assemblies.Add(assembly);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="postfix"></param>
         public void CreateObject(string postfix)
         {
             ////throw new Exception(string.Join(" ", assembly.GetTypes().Select(i => $"{i.FullName}")));
@@ -150,6 +167,12 @@ namespace H.Utilities
             ObjectsDictionary.Add(hash, instance);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="postfix"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task RunMethodAsync(string postfix, CancellationToken cancellationToken = default)
         {
             var values = postfix.Split(' ');
@@ -174,6 +197,9 @@ namespace H.Utilities
 
         #region IDisposable
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void Dispose()
         {
             foreach (var pair in ObjectsDictionary)
