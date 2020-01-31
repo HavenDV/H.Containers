@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using H.Pipes;
 using H.Utilities.Extensions;
 
 namespace H.Utilities
@@ -12,13 +11,12 @@ namespace H.Utilities
     /// <summary>
     /// 
     /// </summary>
-    public sealed class PipeProxyTarget : IDisposable
+    public sealed class RemoteProxyServer : IDisposable
     {
         #region Properties
 
         private IConnection Connection { get; }
 
-        private SingleConnectionPipeServer<string>? PipeServer { get; set; }
         private List<Assembly> Assemblies { get; } = AppDomain.CurrentDomain.GetAssemblies().ToList();
         private Dictionary<string, object> ObjectsDictionary { get; } = new Dictionary<string, object>();
 
@@ -43,9 +41,17 @@ namespace H.Utilities
         /// <summary>
         /// 
         /// </summary>
-        public PipeProxyTarget()
+        public RemoteProxyServer()
         {
-            Connection = new PipeConnection();
+            Connection = new PipeConnection(false);
+            Connection.MessageReceived += async (sender, message) =>
+            {
+                await OnMessageReceivedAsync(message);
+            };
+            Connection.ExceptionOccurred += (sender, exception) =>
+            {
+                OnExceptionOccurred(exception);
+            };
         }
 
         #endregion
@@ -58,29 +64,14 @@ namespace H.Utilities
         /// <returns></returns>
         public async Task InitializeAsync(string name, CancellationToken cancellationToken = default)
         {
-            PipeServer = new SingleConnectionPipeServer<string>(name);
-            PipeServer.MessageReceived += async (sender, args) =>
-            {
-                await OnMessageReceivedAsync(args.Message);
-            };
-            PipeServer.ExceptionOccurred += (sender, args) =>
-            {
-                OnExceptionOccurred(args.Exception);
-            };
-
-            await PipeServer.StartAsync(cancellationToken: cancellationToken);
+            await Connection.InitializeAsync(name, cancellationToken);
         }
 
         private async Task OnFactoryExceptionOccurredAsync(Exception factoryException, CancellationToken cancellationToken = default)
         {
-            if (PipeServer == null)
-            {
-                return;
-            }
-
             try
             {
-                await PipeServer.WriteAsync($"exception {factoryException.Message} StackTrace: {factoryException.StackTrace}", cancellationToken);
+                await Connection.SendMessageAsync($"exception {factoryException.Message} StackTrace: {factoryException.StackTrace}", cancellationToken);
             }
             catch (Exception exception)
             {
@@ -92,12 +83,7 @@ namespace H.Utilities
             string hash, string eventName, string connectionName, object?[] args,
             CancellationToken cancellationToken = default)
         {
-            if (PipeServer == null)
-            {
-                return;
-            }
-
-            await PipeServer.WriteAsync($"raise_event {hash} {eventName} {connectionName}", cancellationToken);
+            await Connection.SendMessageAsync($"raise_event {hash} {eventName} {connectionName}", cancellationToken);
 
             await Connection.SendAsync(connectionName, args, cancellationToken);
         }
@@ -236,7 +222,7 @@ namespace H.Utilities
 
             ObjectsDictionary.Clear();
 
-            PipeServer?.Dispose();
+            Connection.Dispose();
         }
 
         #endregion

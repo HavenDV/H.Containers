@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using H.Pipes;
 using H.Utilities.Args;
 using H.Utilities.Extensions;
 
@@ -13,13 +12,11 @@ namespace H.Utilities
     /// <summary>
     /// 
     /// </summary>
-    public sealed class PipeProxyFactory : IDisposable
+    public sealed class RemoteProxyFactory : IDisposable
     {
         #region Properties
 
         private IConnection Connection { get; }
-
-        private SingleConnectionPipeClient<string>? PipeClient { get; set; }
         private EmptyProxyFactory EmptyProxyFactory { get; } = new EmptyProxyFactory();
         private Dictionary<string, object> HashDictionary { get; } = new Dictionary<string, object>();
 
@@ -64,9 +61,12 @@ namespace H.Utilities
         /// <summary>
         /// 
         /// </summary>
-        public PipeProxyFactory()
+        public RemoteProxyFactory()
         {
-            Connection = new PipeConnection();
+            Connection = new PipeConnection(true);
+            Connection.MessageReceived += (sender, message) => OnMessageReceived(message);
+            Connection.ExceptionOccurred += (sender, exception) => OnExceptionOccurred(exception);
+
             EmptyProxyFactory.AsyncMethodCalled += async (sender, args) =>
             {
                 if (sender == null)
@@ -109,11 +109,7 @@ namespace H.Utilities
         /// <returns></returns>
         public async Task InitializeAsync(string name, CancellationToken cancellationToken = default)
         {
-            PipeClient = new SingleConnectionPipeClient<string>(name);
-            PipeClient.MessageReceived += (sender, args) => OnMessageReceived(args.Message);
-            PipeClient.ExceptionOccurred += (sender, args) => OnExceptionOccurred(args.Exception);
-
-            await PipeClient.ConnectAsync(cancellationToken).ConfigureAwait(false);
+            await Connection.InitializeAsync(name, cancellationToken);
         }
 
         /// <summary>
@@ -127,13 +123,12 @@ namespace H.Utilities
             where T : class
         {
             typeName = typeName ?? throw new ArgumentNullException(nameof(typeName));
-            PipeClient = PipeClient ?? throw new InvalidOperationException("Container is not started");
 
             var instance = EmptyProxyFactory.CreateInstance<T>();
             var hash = GetHash(instance);
             HashDictionary.Add(hash, instance);
 
-            await PipeClient.WriteAsync($"create_object {typeName} {hash}", cancellationToken).ConfigureAwait(false);
+            await Connection.SendMessageAsync($"create_object {typeName} {hash}", cancellationToken).ConfigureAwait(false);
 
             return instance;
         }
@@ -143,7 +138,7 @@ namespace H.Utilities
         /// </summary>
         public void Dispose()
         {
-            PipeClient?.Dispose();
+            Connection.Dispose();
         }
 
         #endregion
@@ -154,12 +149,11 @@ namespace H.Utilities
 
         private async Task<object?> RunMethodAsync(MethodInfo methodInfo, object instance, object?[] args, CancellationToken cancellationToken = default)
         {
-            PipeClient = PipeClient ?? throw new InvalidOperationException("Container is not started");
-
             var hash = GetHash(instance);
             var name = methodInfo.Name;
             var pipeNamePrefix = $"H.Containers.Process_{hash}_{name}_{Guid.NewGuid()}_";
-            await PipeClient.WriteAsync($"run_method {name} {hash} {pipeNamePrefix}", cancellationToken).ConfigureAwait(false);
+
+            await Connection.SendMessageAsync($"run_method {name} {hash} {pipeNamePrefix}", cancellationToken).ConfigureAwait(false);
 
             await Task.WhenAll(args.Select(async (arg, i) =>
                 await Connection.SendAsync($"{pipeNamePrefix}{i}", arg, cancellationToken)));

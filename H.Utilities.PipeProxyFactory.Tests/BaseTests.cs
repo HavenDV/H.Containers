@@ -15,7 +15,7 @@ namespace H.Utilities.Tests
             // ReSharper disable once AccessToDisposedClosure
             cancellationToken.Register(() => cancellationTokenSource.Cancel());
 
-            using var factory = new PipeProxyFactory();
+            using var factory = new RemoteProxyFactory();
             factory.ExceptionOccurred += (sender, exception) =>
             {
                 Console.WriteLine($"factory.ExceptionOccurred: {exception}");
@@ -24,8 +24,8 @@ namespace H.Utilities.Tests
                 // ReSharper disable once AccessToDisposedClosure
                 cancellationTokenSource.Cancel();
             };
-            using var target = new PipeProxyTarget();
-            target.ExceptionOccurred += (sender, exception) =>
+            using var server = new RemoteProxyServer();
+            server.ExceptionOccurred += (sender, exception) =>
             {
                 Console.WriteLine($"target.ExceptionOccurred: {exception}");
                 receivedException = exception;
@@ -34,7 +34,7 @@ namespace H.Utilities.Tests
                 cancellationTokenSource.Cancel();
             };
 
-            await target.InitializeAsync(nameof(PipeProxyFactoryTests), cancellationTokenSource.Token);
+            await server.InitializeAsync(nameof(PipeProxyFactoryTests), cancellationTokenSource.Token);
             await factory.InitializeAsync(nameof(PipeProxyFactoryTests), cancellationTokenSource.Token);
 
             var instance = await factory.CreateInstanceAsync<T>(typeName, cancellationTokenSource.Token);
