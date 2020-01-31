@@ -11,7 +11,7 @@ namespace H.Utilities
     /// <summary>
     /// 
     /// </summary>
-    public sealed class RemoteProxyServer : IDisposable
+    public class RemoteProxyServer : IDisposable
     {
         #region Properties
 
@@ -41,9 +41,10 @@ namespace H.Utilities
         /// <summary>
         /// 
         /// </summary>
-        public RemoteProxyServer()
+        /// <param name="connection"></param>
+        public RemoteProxyServer(IConnection connection)
         {
-            Connection = new PipeConnection(false);
+            Connection = connection ?? throw new ArgumentNullException(nameof(connection));
             Connection.MessageReceived += async (sender, message) =>
             {
                 await OnMessageReceivedAsync(message);

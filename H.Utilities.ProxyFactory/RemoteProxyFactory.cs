@@ -12,7 +12,7 @@ namespace H.Utilities
     /// <summary>
     /// 
     /// </summary>
-    public sealed class RemoteProxyFactory : IDisposable
+    public class RemoteProxyFactory : IDisposable
     {
         #region Properties
 
@@ -61,9 +61,10 @@ namespace H.Utilities
         /// <summary>
         /// 
         /// </summary>
-        public RemoteProxyFactory()
+        /// <param name="connection"></param>
+        public RemoteProxyFactory(IConnection connection)
         {
-            Connection = new PipeConnection(true);
+            Connection = connection ?? throw new ArgumentNullException(nameof(connection));
             Connection.MessageReceived += (sender, message) => OnMessageReceived(message);
             Connection.ExceptionOccurred += (sender, exception) => OnExceptionOccurred(exception);
 
