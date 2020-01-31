@@ -62,5 +62,30 @@ namespace H.Utilities.Extensions
             return type.GetEvent(name)
                    ?? throw new ArgumentException($"Event \"{name}\" is not found");
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static object? GetDefault(this Type type)
+        {
+            return typeof(TypeExtensions)
+                .GetMethod(nameof(GetDefault), Type.EmptyTypes)?
+                .MakeGenericMethod(type)
+                .Invoke(null, null);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static T GetDefault<T>()
+        {
+#pragma warning disable CS8653 // A default expression introduces a null value for a type parameter.
+            return default;
+#pragma warning restore CS8653 // A default expression introduces a null value for a type parameter.
+        }
     }
 }

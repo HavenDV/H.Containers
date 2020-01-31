@@ -407,10 +407,6 @@ namespace H.Utilities
             {
                 return null;
             }
-            if (type == typeof(string))
-            {
-                return null;
-            }
             if (type == typeof(Task))
             {
                 return Task.CompletedTask;
@@ -419,18 +415,14 @@ namespace H.Utilities
             {
                 var taskType = type.GenericTypeArguments.FirstOrDefault()
                                ?? throw new InvalidOperationException("Task type is null");
-                var value = Activator.CreateInstance(taskType);
+                var value = taskType.GetDefault();
 
                 return typeof(Task).GetMethodInfo(nameof(Task.FromResult))
                     .MakeGenericMethod(taskType)
                     .Invoke(null, new []{ value });
             }
-            if (!type.IsValueType)
-            {
-                return null;
-            }
 
-            return Activator.CreateInstance(type);
+            return type.GetDefault();
         }
 
         #endregion
