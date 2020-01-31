@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using H.Pipes;
-using H.Utilities.Args;
 using H.Utilities.Extensions;
 
 namespace H.Utilities
@@ -66,16 +65,18 @@ namespace H.Utilities
             }
         }
 
-        private async Task OnEventOccurredAsync(PipeEventEventArgs args, CancellationToken cancellationToken = default)
+        private async Task OnEventOccurredAsync(
+            string hash, string eventName, string connectionName, object?[] args,
+            CancellationToken cancellationToken = default)
         {
             if (PipeServer == null)
             {
                 return;
             }
 
-            await PipeServer.WriteAsync($"raise_event {args.Hash} {args.EventName} {args.PipeName}", cancellationToken);
+            await PipeServer.WriteAsync($"raise_event {hash} {eventName} {connectionName}", cancellationToken);
 
-            await Connection.SendAsync(args.PipeName, args.Args, cancellationToken);
+            await Connection.SendAsync(connectionName, args, cancellationToken);
         }
 
         private async Task OnMessageReceivedAsync(string message, CancellationToken cancellationToken = default)
@@ -136,8 +137,8 @@ namespace H.Utilities
                             args[0] = null;
                         }
 
-                        await OnEventOccurredAsync(new PipeEventEventArgs(hash, name,
-                            $"H.Containers.Process_{hash}_{name}_Event_{Guid.NewGuid()}", args));
+                        await OnEventOccurredAsync(hash, name,
+                            $"H.Containers.Process_{hash}_{name}_Event_{Guid.NewGuid()}", args);
                     }
                     catch (Exception exception)
                     {
