@@ -14,8 +14,7 @@ namespace H.Utilities
         #region Properties
 
         private bool IsFactory { get; }
-        private SingleConnectionPipeClient<string>? PipeClient { get; set; }
-        private SingleConnectionPipeServer<string>? PipeServer { get; set; }
+        private IPipeConnection<string>? InternalConnection { get; set; }
 
         #endregion
 
@@ -68,19 +67,23 @@ namespace H.Utilities
         {
             if (IsFactory)
             {
-                PipeClient = new SingleConnectionPipeClient<string>(name);
-                PipeClient.MessageReceived += (sender, args) => OnMessageReceived(args.Message);
-                PipeClient.ExceptionOccurred += (sender, args) => OnExceptionOccurred(args.Exception);
+                var client = new SingleConnectionPipeClient<string>(name);
+                client.MessageReceived += (sender, args) => OnMessageReceived(args.Message);
+                client.ExceptionOccurred += (sender, args) => OnExceptionOccurred(args.Exception);
 
-                await PipeClient.ConnectAsync(cancellationToken).ConfigureAwait(false);
+                await client.ConnectAsync(cancellationToken).ConfigureAwait(false);
+
+                InternalConnection = client;
             }
             else
             {
-                PipeServer = new SingleConnectionPipeServer<string>(name);
-                PipeServer.MessageReceived += (sender, args) => OnMessageReceived(args.Message);
-                PipeServer.ExceptionOccurred += (sender, args) => OnExceptionOccurred(args.Exception);
+                var server = new SingleConnectionPipeServer<string>(name);
+                server.MessageReceived += (sender, args) => OnMessageReceived(args.Message);
+                server.ExceptionOccurred += (sender, args) => OnExceptionOccurred(args.Exception);
 
-                await PipeServer.StartAsync(cancellationToken: cancellationToken);
+                await server.StartAsync(cancellationToken: cancellationToken);
+
+                InternalConnection = server;
             }
         }
 
@@ -96,18 +99,9 @@ namespace H.Utilities
             // ReSharper disable once AccessToDisposedClosure
             cancellationToken.Register(() => tokenSource.Cancel());
 
-            if (IsFactory)
-            {
-                PipeClient = PipeClient ?? throw new InvalidOperationException("PipeClient is null");
+            InternalConnection = InternalConnection ?? throw new InvalidOperationException("InternalConnection is null");
 
-                await PipeClient.WriteAsync(message, cancellationToken).ConfigureAwait(false);
-            }
-            else
-            {
-                PipeServer = PipeServer ?? throw new InvalidOperationException("PipeServer is null");
-
-                await PipeServer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
-            }
+            await InternalConnection.WriteAsync(message, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -158,8 +152,7 @@ namespace H.Utilities
         /// </summary>
         public void Dispose()
         {
-            PipeClient?.Dispose();
-            PipeServer?.Dispose();
+            InternalConnection?.Dispose();
         }
 
         #endregion
