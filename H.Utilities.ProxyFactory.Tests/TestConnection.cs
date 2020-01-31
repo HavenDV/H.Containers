@@ -21,7 +21,9 @@ namespace H.Utilities.Tests
 
         public event EventHandler<string>? MessageReceived;
 
+#pragma warning disable 0067
         public event EventHandler<Exception>? ExceptionOccurred;
+#pragma warning restore 0067
 
         private void OnMessageReceived(string message)
         {
