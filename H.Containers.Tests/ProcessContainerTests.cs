@@ -12,7 +12,6 @@ namespace H.Containers.Tests
     [TestClass]
     public class ProcessContainerTests
     {
-        /*
         [TestMethod]
         public async Task StartTest()
         {
@@ -90,6 +89,8 @@ namespace H.Containers.Tests
             var instance = await container.CreateObjectAsync<IConverter>("H.NET.Converters.YandexConverter", cancellationTokenSource.Token);
             Assert.IsNotNull(instance);
 
+            Assert.AreEqual("YandexConverter", instance.ShortName);
+
             try
             {
                 await Task.Delay(Timeout.InfiniteTimeSpan, cancellationTokenSource.Token);
@@ -131,6 +132,6 @@ namespace H.Containers.Tests
             {
                 return $"Hello, input = {input}";
             }
-        }*/
+        }
     }
 }

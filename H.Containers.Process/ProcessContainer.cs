@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using H.Pipes;
 using H.Utilities;
 
 namespace H.Containers
@@ -26,9 +23,7 @@ namespace H.Containers
         public bool ForceUpdateApplication { get; set; }
 
         private System.Diagnostics.Process? Process { get; set; }
-        private SingleConnectionPipeClient<string>? PipeClient { get; set; }
         private PipeProxyFactory ProxyFactory { get; } = new PipeProxyFactory();
-        private List<string> LoadedAssemblies { get; } = new List<string>();
 
         #endregion
 
@@ -56,6 +51,8 @@ namespace H.Containers
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Name = (string.IsNullOrWhiteSpace(name) ? null : "") ?? throw new ArgumentException("Name is empty", nameof(name));
+
+            ProxyFactory.ExceptionOccurred += (sender, exception) => OnExceptionOccurred(exception);
         }
 
         #endregion
@@ -87,39 +84,11 @@ namespace H.Containers
         public async Task StartAsync(CancellationToken cancellationToken = default)
         {
             var path = Application.GetPathAndUnpackIfRequired();
-
             var name = $"{Name}_Pipe";
 
-            await ProxyFactory.InitializeAsync($"{name}_ProxyFactoryPipe", cancellationToken);
             Process = System.Diagnostics.Process.Start(path, name);
 
-            PipeClient = new SingleConnectionPipeClient<string>(name);
-            PipeClient.MessageReceived += (sender, args) => OnMessageReceived(args.Message);
-            PipeClient.ExceptionOccurred += (sender, args) => OnExceptionOccurred(args.Exception);
-
-            await PipeClient.ConnectAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        private void OnMessageReceived(string message)
-        {
-            try
-            {
-                message = message ?? throw new ArgumentNullException(nameof(message));
-
-                var prefix = message.Split(' ').First();
-                var postfix = message.Replace(prefix, string.Empty).TrimStart();
-
-                switch (prefix)
-                {
-                    case "exception":
-                        OnExceptionOccurred(new Exception(postfix));
-                        break;
-                }
-            }
-            catch (Exception exception)
-            {
-                OnExceptionOccurred(exception);
-            }
+            await ProxyFactory.InitializeAsync(name, cancellationToken);
         }
 
         /// <summary>
@@ -127,15 +96,11 @@ namespace H.Containers
         /// </summary>
         /// <param name="path"></param>
         /// <param name="cancellationToken"></param>
+        /// <exception cref="ArgumentNullException"></exception>
         /// <returns></returns>
         public async Task LoadAssemblyAsync(string path, CancellationToken cancellationToken = default)
         {
-            path = path ?? throw new ArgumentNullException(nameof(path));
-            PipeClient = PipeClient ?? throw new InvalidOperationException("Container is not started");
-
-            await PipeClient.WriteAsync($"load_assembly {path}", cancellationToken).ConfigureAwait(false);
-
-            LoadedAssemblies.Add(path);
+            await ProxyFactory.LoadAssemblyAsync(path, cancellationToken);
         }
 
         /// <summary>
@@ -166,7 +131,7 @@ namespace H.Containers
             type = type ?? throw new ArgumentNullException(nameof(type));
 
             var path = type.Assembly.Location;
-            if (!LoadedAssemblies.Contains(path))
+            if (!ProxyFactory.LoadedAssemblies.Contains(path))
             {
                 await LoadAssemblyAsync(path, cancellationToken);
             }
@@ -206,15 +171,9 @@ namespace H.Containers
             {
                 timeout ??= TimeSpan.FromSeconds(1);
 
-                if (PipeClient == null)
-                {
-                    Process.Kill();
-                    return;
-                }
-
                 if (!Process.HasExited)
                 {
-                    await PipeClient.WriteAsync("stop", cancellationToken).ConfigureAwait(false);
+                    await ProxyFactory.SendMessageAsync("stop", cancellationToken).ConfigureAwait(false);
                 }
 
                 using var cancellationTokenSource = new CancellationTokenSource(timeout.Value);
@@ -225,9 +184,6 @@ namespace H.Containers
 
                     cancellationToken.ThrowIfCancellationRequested();
                 }
-
-                Process.Dispose();
-                Process = null;
             }
             catch (OperationCanceledException)
             {
@@ -235,11 +191,10 @@ namespace H.Containers
             }
             finally
             {
-                PipeClient?.Dispose();
-                PipeClient = null;
-
                 Process?.Dispose();
                 Process = null;
+
+                ProxyFactory?.Dispose();
             }
         }
 
