@@ -17,7 +17,7 @@ namespace H.Utilities
     {
         #region Properties
 
-        private Connection Connection { get; }
+        private IConnection Connection { get; }
 
         private SingleConnectionPipeClient<string>? PipeClient { get; set; }
         private EmptyProxyFactory EmptyProxyFactory { get; } = new EmptyProxyFactory();
@@ -66,7 +66,7 @@ namespace H.Utilities
         /// </summary>
         public PipeProxyFactory()
         {
-            Connection = new Connection();
+            Connection = new PipeConnection();
             EmptyProxyFactory.AsyncMethodCalled += async (sender, args) =>
             {
                 if (sender == null)

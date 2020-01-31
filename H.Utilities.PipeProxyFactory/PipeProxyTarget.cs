@@ -16,7 +16,7 @@ namespace H.Utilities
     {
         #region Properties
 
-        private Connection Connection { get; }
+        private IConnection Connection { get; }
 
         private SingleConnectionPipeServer<string>? PipeServer { get; set; }
         private List<Assembly> Assemblies { get; } = AppDomain.CurrentDomain.GetAssemblies().ToList();
@@ -45,7 +45,7 @@ namespace H.Utilities
         /// </summary>
         public PipeProxyTarget()
         {
-            Connection = new Connection();
+            Connection = new PipeConnection();
         }
 
         #endregion

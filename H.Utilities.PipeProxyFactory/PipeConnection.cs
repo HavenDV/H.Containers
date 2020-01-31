@@ -9,7 +9,7 @@ namespace H.Utilities
     /// <summary>
     /// 
     /// </summary>
-    public class Connection
+    public class PipeConnection : IConnection
     {
         /// <summary>
         /// 
