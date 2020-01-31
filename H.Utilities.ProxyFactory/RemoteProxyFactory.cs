@@ -16,6 +16,9 @@ namespace H.Utilities
     {
         #region Properties
 
+        /// <summary>
+        /// 
+        /// </summary>
         public List<string> LoadedAssemblies { get; } = new List<string>();
 
         private IConnection Connection { get; }
@@ -171,6 +174,12 @@ namespace H.Utilities
 
         private static string GetHash(object instance) => $"{instance.GetHashCode()}";
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
         {
             await Connection.SendMessageAsync(message, cancellationToken).ConfigureAwait(false);

@@ -78,11 +78,23 @@ namespace H.Utilities
             await Connection.InitializeAsync(name, cancellationToken);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
         {
             await Connection.SendMessageAsync(message, cancellationToken).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="factoryException"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task SendExceptionAsync(Exception factoryException, CancellationToken cancellationToken = default)
         {
             try
