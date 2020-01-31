@@ -17,6 +17,8 @@ namespace H.Utilities
     {
         #region Properties
 
+        private Connection Connection { get; }
+
         private SingleConnectionPipeClient<string>? PipeClient { get; set; }
         private EmptyProxyFactory EmptyProxyFactory { get; } = new EmptyProxyFactory();
         private Dictionary<string, object> HashDictionary { get; } = new Dictionary<string, object>();
@@ -64,6 +66,7 @@ namespace H.Utilities
         /// </summary>
         public PipeProxyFactory()
         {
+            Connection = new Connection();
             EmptyProxyFactory.AsyncMethodCalled += async (sender, args) =>
             {
                 if (sender == null)

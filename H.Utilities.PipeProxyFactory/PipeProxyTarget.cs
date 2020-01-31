@@ -16,6 +16,8 @@ namespace H.Utilities
     {
         #region Properties
 
+        private Connection Connection { get; }
+
         private SingleConnectionPipeServer<string>? PipeServer { get; set; }
         private List<Assembly> Assemblies { get; } = AppDomain.CurrentDomain.GetAssemblies().ToList();
         private Dictionary<string, object> ObjectsDictionary { get; } = new Dictionary<string, object>();
@@ -32,6 +34,18 @@ namespace H.Utilities
         private void OnExceptionOccurred(Exception exception)
         {
             ExceptionOccurred?.Invoke(this, exception);
+        }
+
+        #endregion
+
+        #region Constructors
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public PipeProxyTarget()
+        {
+            Connection = new Connection();
         }
 
         #endregion
