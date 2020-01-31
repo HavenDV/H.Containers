@@ -7,13 +7,14 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <None Remove="Data\H.NET.Core.dll" />
-    <None Remove="Data\YandexConverter.zip" />
+    <None Remove="TestFiles\H.NET.Core.dll" />
+    <None Remove="TestFiles\YandexConverter.zip" />
   </ItemGroup>
   
   <ItemGroup>
-    <EmbeddedResource Include="Data\H.NET.Core.dll" />
-    <EmbeddedResource Include="Data\YandexConverter.zip" />
+    <EmbeddedResource Include="TestFiles\H.NET.Core.dll" />
+    <EmbeddedResource Include="TestFiles\YandexConverter.zip" />
+    <EmbeddedResource Include="TestFiles\проверка_проверка_8000.wav" />
   </ItemGroup>
   
   <ItemGroup>
@@ -32,7 +33,7 @@
   
   <ItemGroup>
     <Reference Include="H.NET.Core">
-      <HintPath>Data\H.NET.Core.dll</HintPath>
+      <HintPath>TestFiles\H.NET.Core.dll</HintPath>
     </Reference>
   </ItemGroup>
   
