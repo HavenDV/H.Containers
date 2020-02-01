@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using H.Containers.Tests.Utilities;
 using H.NET.Core;
@@ -62,10 +63,10 @@ namespace H.Containers.Tests
             await recognition.StopAsync();
         }
 
-        public static async Task ConvertTest(IConverter converter, string name, string expected)
+        public static async Task ConvertTest(IConverter converter, string name, string expected, CancellationToken cancellationToken = default)
         {
             var bytes = ResourcesUtilities.ReadFileAsBytes(name);
-            var actual = await converter.ConvertAsync(bytes);
+            var actual = await converter.ConvertAsync(bytes, cancellationToken);
 
             Assert.AreEqual(expected, actual);
         }

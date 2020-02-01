@@ -92,7 +92,7 @@ namespace H.Containers.Tests
 
             Assert.AreEqual("YandexConverter", instance.ShortName);
 
-            //await BaseConvertersTests.ConvertTest(instance, "проверка_проверка_8000.wav", "проверка проверка");
+            //await BaseConvertersTests.ConvertTest(instance, "проверка_проверка_8000.wav", "проверка проверка", cancellationTokenSource.Token);
 
             try
             {
