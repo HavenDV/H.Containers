@@ -94,7 +94,7 @@ namespace H.Utilities
 
                 try
                 {
-                    args.ReturnObject = await RunMethodAsync(args.MethodInfo, sender, args.Arguments.ToArray(), CancellationToken.None)
+                    args.ReturnObject = await RunMethodAsync(args.MethodInfo, sender, args.Arguments.ToArray())
                         .ConfigureAwait(false);
                 }
                 catch (Exception exception)
@@ -185,18 +185,58 @@ namespace H.Utilities
             await Connection.SendMessageAsync(message, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<object?> RunMethodAsync(MethodInfo methodInfo, object instance, object?[] args, CancellationToken cancellationToken = default)
+        private async Task<object?> RunMethodAsync(MethodInfo methodInfo, object instance, object?[] args)
         {
+            var cancellationToken = args.FirstOrDefault(arg => arg is CancellationToken) as CancellationToken? 
+                                    ?? CancellationToken.None;
+
             var hash = GetHash(instance);
             var name = methodInfo.Name;
             var pipeNamePrefix = $"H.Containers.Process_{hash}_{name}_{Guid.NewGuid()}_";
 
             await Connection.SendMessageAsync($"run_method {name} {hash} {pipeNamePrefix}", cancellationToken).ConfigureAwait(false);
 
-            await Task.WhenAll(args.Select(async (arg, i) =>
-                await Connection.SendAsync($"{pipeNamePrefix}{i}", arg, cancellationToken)));
+            cancellationToken.Register(async () =>
+            {
+                using var source = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-            return await Connection.ReceiveAsync<object?>($"{pipeNamePrefix}out", cancellationToken);
+                try
+                {
+                    await SendMessageAsync($"cancel_method {name} {hash}", source.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                }
+            });
+
+            await Task.WhenAll(args
+                .Select(async (arg, i) =>
+                {
+                    if (arg?.GetType() == typeof(CancellationToken))
+                    {
+                        return;
+                    }
+
+                    await Connection.SendAsync($"{pipeNamePrefix}{i}", arg, cancellationToken);
+                }));
+
+            var value = await Connection.ReceiveAsync<object?>($"{pipeNamePrefix}out", cancellationToken);
+            var type = methodInfo.ReturnType;
+            if (type == typeof(Task))
+            {
+                return Task.CompletedTask;
+            }
+            if (type.BaseType == typeof(Task))
+            {
+                var taskType = type.GenericTypeArguments.FirstOrDefault()
+                               ?? throw new InvalidOperationException("Task type is null");
+
+                return typeof(Task).GetMethodInfo(nameof(Task.FromResult))
+                    .MakeGenericMethod(taskType)
+                    .Invoke(null, new[] { value });
+            }
+
+            return value;
         }
 
         private void OnMessageReceived(string message)

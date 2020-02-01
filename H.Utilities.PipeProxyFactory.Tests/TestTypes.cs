@@ -47,14 +47,22 @@ namespace H.Utilities.Tests
 
     public interface IAsyncMethodsClass
     {
-        Task Test3Async(CancellationToken cancellationToken = default);
+        Task NoValueTaskAsync(CancellationToken cancellationToken = default);
+        Task<int> ValueTypeResultTaskWithResultEquals1Async(CancellationToken cancellationToken = default);
     }
 
     public class AsyncMethodsClass : IAsyncMethodsClass
     {
-        public async Task Test3Async(CancellationToken cancellationToken = default)
+        public async Task NoValueTaskAsync(CancellationToken cancellationToken = default)
         {
             await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+        }
+
+        public async Task<int> ValueTypeResultTaskWithResultEquals1Async(CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+
+            return 1;
         }
     }
 

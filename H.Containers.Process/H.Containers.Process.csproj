@@ -35,7 +35,7 @@
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <Version>0.3.0</Version>
+    <Version>0.3.1</Version>
     <Description>Features:
 - You can run any object in another process in several lines
 - The created object looks like a real one (see ProxyFactory)
@@ -47,7 +47,7 @@
     <PackageProjectUrl>https://github.com/HavenDV/H.Containers</PackageProjectUrl>
     <RepositoryUrl>https://github.com/HavenDV/H.Containers</RepositoryUrl>
     <PackageTags>run code in separate process, process, containers, proxy objects, direct proxy</PackageTags>
-    <PackageReleaseNotes>Fixed main bugs</PackageReleaseNotes>
+    <PackageReleaseNotes>Fixed async methods bugs</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IncludeSymbols>true</IncludeSymbols>

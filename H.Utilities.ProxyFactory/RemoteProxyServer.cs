@@ -116,7 +116,7 @@ namespace H.Utilities
             await Connection.SendAsync(connectionName, args, cancellationToken);
         }
 
-        private async Task OnMessageReceivedAsync(string message, CancellationToken cancellationToken = default)
+        private async Task OnMessageReceivedAsync(string message)
         {
             try
             {
@@ -138,13 +138,13 @@ namespace H.Utilities
                         break;
 
                     case "run_method":
-                        await RunMethodAsync(postfix, cancellationToken);
+                        await RunMethodAsync(postfix);
                         break;
                 }
             }
             catch (Exception exception)
             {
-                await SendExceptionAsync(exception, cancellationToken);
+                await SendExceptionAsync(exception);
             }
         }
 
@@ -207,9 +207,8 @@ namespace H.Utilities
         /// 
         /// </summary>
         /// <param name="postfix"></param>
-        /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task RunMethodAsync(string postfix, CancellationToken cancellationToken = default)
+        public async Task RunMethodAsync(string postfix)
         {
             var values = postfix.Split(' ');
             var name = values.ElementAtOrDefault(0) ?? throw new InvalidOperationException("Name is null");
@@ -220,13 +219,41 @@ namespace H.Utilities
             var methodInfo = instance.GetType().GetMethod(name)
                              ?? throw new InvalidOperationException($"Method is not found: {name}");
 
+            using var cancellationTokenSource = new CancellationTokenSource();
             var args = await Task.WhenAll(methodInfo.GetParameters()
-                .Select(async (_, i) => 
-                    await Connection.ReceiveAsync<object?>($"{pipeNamePrefix}{i}", cancellationToken)));
+                .Select(async (parameter, i) =>
+                {
+                    if (parameter.ParameterType == typeof(CancellationToken))
+                    {
+                        // ReSharper disable once AccessToDisposedClosure
+                        return cancellationTokenSource.Token;
+                    }
 
-            var value = methodInfo.Invoke(instance, args.ToArray());
+                    // ReSharper disable once AccessToDisposedClosure
+                    return await Connection.ReceiveAsync<object?>($"{pipeNamePrefix}{i}", cancellationTokenSource.Token);
+                }));
 
-            await Connection.SendAsync($"{pipeNamePrefix}out", value, cancellationToken);
+            object? value = methodInfo.Invoke(instance, args.ToArray());
+            if (value is Task task)
+            {
+                await task;
+
+                var type = value.GetType();
+                var taskTypeName = type.BaseType?.GenericTypeArguments?.FirstOrDefault()?.FullName;
+                if (taskTypeName != "System.Threading.Tasks.VoidTaskResult")
+                {
+                    value = value
+                        .GetType()
+                        .GetProperty(nameof(Task<int>.Result), BindingFlags.Public | BindingFlags.Instance)?
+                        .GetValue(value);
+                }
+                else
+                {
+                    value = null;
+                }
+            }
+
+            await Connection.SendAsync($"{pipeNamePrefix}out", value, cancellationTokenSource.Token);
         }
 
         #endregion

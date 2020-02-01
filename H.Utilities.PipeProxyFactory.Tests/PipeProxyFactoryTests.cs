@@ -68,13 +68,15 @@ namespace H.Utilities.Tests
         [TestMethod]
         public async Task AsyncMethodsTest()
         {
-            using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(15));
 
             await BaseTests.BaseInstanceTestAsync<IAsyncMethodsClass>(
                 GetFullName(typeof(AsyncMethodsClass)),
                 async (instance, cancellationToken) =>
                 {
-                    await instance.Test3Async(cancellationToken);
+                    await instance.NoValueTaskAsync(cancellationToken);
+
+                    Assert.AreEqual(1, await instance.ValueTypeResultTaskWithResultEquals1Async(cancellationToken));
                 },
                 cancellationTokenSource.Token);
         }
