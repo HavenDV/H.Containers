@@ -14,10 +14,8 @@ namespace H.Utilities.Tests
         {
             using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-            var typeName = typeof(SimpleEventClass).FullName ??
-                           throw new InvalidOperationException("Type name is null");
             await BaseTests.BaseInstanceRemoteTestAsync<ISimpleEventClass>(
-                typeName,
+                GetFullName(typeof(SimpleEventClass)),
                 (instance, cancellationToken) =>
                 {
                     Assert.AreEqual(321 + 123, instance.Method1(123));
@@ -33,10 +31,8 @@ namespace H.Utilities.Tests
         {
             using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-            var typeName = typeof(SimpleEventClass).FullName ??
-                           throw new InvalidOperationException("Type name is null");
             await BaseTests.BaseInstanceRemoteTestAsync<ISimpleEventClass>(
-                typeName,
+                GetFullName(typeof(SimpleEventClass)),
                 async (instance, cancellationToken) =>
                 {
                     instance.Event1 += (sender, value) =>
@@ -74,10 +70,8 @@ namespace H.Utilities.Tests
         {
             using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-            var typeName = typeof(CommonClass).FullName ??
-                                  throw new InvalidOperationException("Type name is null");
             await BaseTests.BaseInstanceRemoteTestAsync<IInterface>(
-                typeName,
+                GetFullName(typeof(CommonClass)),
                 async (instance, cancellationToken) =>
                 {
                     await instance.Test3Async(cancellationToken);
@@ -85,6 +79,12 @@ namespace H.Utilities.Tests
                     Assert.AreEqual(4, await instance.Test4Async(cancellationToken));
                 },
                 cancellationTokenSource.Token);
+        }
+
+        private static string GetFullName(Type type)
+        {
+            return type.FullName ??
+                   throw new InvalidOperationException("Type full name is null");
         }
     }
 }

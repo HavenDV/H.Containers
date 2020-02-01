@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace H.Utilities.Tests
 {
@@ -40,4 +42,21 @@ namespace H.Utilities.Tests
             return $"Hello, input = {input}";
         }
     }
+
+    #region Async methods
+
+    public interface IAsyncMethodsClass
+    {
+        Task Test3Async(CancellationToken cancellationToken = default);
+    }
+
+    public class AsyncMethodsClass : IAsyncMethodsClass
+    {
+        public async Task Test3Async(CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+        }
+    }
+
+    #endregion
 }

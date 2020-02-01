@@ -14,10 +14,8 @@ namespace H.Utilities.Tests
         {
             using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-            var typeName = typeof(SimpleEventClass).FullName ??
-                           throw new InvalidOperationException("Type name is null");
             await BaseTests.BaseInstanceTestAsync<ISimpleEventClass>(
-                typeName,
+                GetFullName(typeof(SimpleEventClass)),
                 (instance, cancellationToken) =>
                 {
                     Assert.AreEqual(321 + 123, instance.Method1(123));
@@ -33,10 +31,8 @@ namespace H.Utilities.Tests
         {
             using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-            var typeName = typeof(SimpleEventClass).FullName ??
-                           throw new InvalidOperationException("Type name is null");
             await BaseTests.BaseInstanceTestAsync<ISimpleEventClass>(
-                typeName,
+                GetFullName(typeof(SimpleEventClass)),
                 async (instance, cancellationToken) =>
                 {
                     instance.Event1 += (sender, value) =>
@@ -67,6 +63,26 @@ namespace H.Utilities.Tests
                     Assert.AreEqual("555", event2Values[0]);
                 },
                 cancellationTokenSource.Token);
+        }
+
+        [TestMethod]
+        public async Task AsyncMethodsTest()
+        {
+            using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+            await BaseTests.BaseInstanceTestAsync<IAsyncMethodsClass>(
+                GetFullName(typeof(AsyncMethodsClass)),
+                async (instance, cancellationToken) =>
+                {
+                    await instance.Test3Async(cancellationToken);
+                },
+                cancellationTokenSource.Token);
+        }
+
+        private static string GetFullName(Type type)
+        {
+            return type.FullName ??
+                   throw new InvalidOperationException("Type full name is null");
         }
     }
 }
