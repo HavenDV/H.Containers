@@ -207,6 +207,10 @@ namespace H.Utilities
                 catch (OperationCanceledException)
                 {
                 }
+                catch (Exception e)
+                {
+                    OnExceptionOccurred(e);
+                }
             });
 
             await Task.WhenAll(args

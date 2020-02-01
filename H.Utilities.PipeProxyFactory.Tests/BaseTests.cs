@@ -16,13 +16,20 @@ namespace H.Utilities.Tests
             cancellationToken.Register(() => cancellationTokenSource.Cancel());
 
             using var factory = new PipeProxyFactory();
+            factory.MethodCalled += (sender, args) => args.CancellationToken = cancellationToken;
             factory.ExceptionOccurred += (sender, exception) =>
             {
                 Console.WriteLine($"factory.ExceptionOccurred: {exception}");
                 receivedException = exception;
 
                 // ReSharper disable once AccessToDisposedClosure
-                cancellationTokenSource.Cancel();
+                try
+                {
+                    cancellationTokenSource.Cancel();
+                }
+                catch (ObjectDisposedException)
+                {
+                }
             };
             using var server = new PipeProxyServer();
             server.ExceptionOccurred += (sender, exception) =>

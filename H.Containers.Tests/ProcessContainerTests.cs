@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using H.Containers.Tests.Utilities;
@@ -64,7 +65,10 @@ namespace H.Containers.Tests
         {
             var receivedException = (Exception?)null;
             using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            await using var container = new ProcessContainer(nameof(ProcessContainerTests));
+            await using var container = new ProcessContainer(nameof(ProcessContainerTests))
+            {
+                MethodsCancellationToken = cancellationTokenSource.Token,
+            };
             container.ExceptionOccurred += (sender, exception) =>
             {
                 Console.WriteLine($"ExceptionOccurred: {exception}");
