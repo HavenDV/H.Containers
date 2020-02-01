@@ -16,8 +16,14 @@ namespace H.Containers.Tests
         [TestInitialize]
         public void TestInitialize()
         {
-            Application.Clear();
-            Application.GetPathAndUnpackIfRequired();
+            try
+            {
+                Application.Clear();
+                Application.GetPathAndUnpackIfRequired();
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
         }
 
         [TestMethod]
