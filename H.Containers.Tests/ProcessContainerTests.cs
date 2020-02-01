@@ -87,20 +87,20 @@ namespace H.Containers.Tests
             await container.InitializeAsync(cancellationTokenSource.Token);
             await container.StartAsync(cancellationTokenSource.Token);
 
-            var directory = Path.Combine(Path.GetTempPath(), "H.Containers.Tests_YandexConverter");
+            var directory = Path.Combine(Path.GetTempPath(), "H.Containers.Tests_WitAiConverter");
             Directory.CreateDirectory(directory);
-            var path = Path.Combine(directory, "YandexConverter.zip");
-            var bytes = ResourcesUtilities.ReadFileAsBytes("YandexConverter.zip");
+            var path = Path.Combine(directory, "WitAiConverter.zip");
+            var bytes = ResourcesUtilities.ReadFileAsBytes("WitAiConverter.zip");
             File.WriteAllBytes(path, bytes);
 
             ZipFile.ExtractToDirectory(path, directory, true);
 
-            await container.LoadAssemblyAsync(Path.Combine(directory, "YandexConverter.dll"), cancellationTokenSource.Token);
+            await container.LoadAssemblyAsync(Path.Combine(directory, "WitAiConverter.dll"), cancellationTokenSource.Token);
 
-            var instance = await container.CreateObjectAsync<IConverter>("H.NET.Converters.YandexConverter", cancellationTokenSource.Token);
+            var instance = await container.CreateObjectAsync<IConverter>("H.NET.Converters.WitAiConverter", cancellationTokenSource.Token);
             Assert.IsNotNull(instance);
 
-            Assert.AreEqual("YandexConverter", instance.ShortName);
+            Assert.AreEqual("WitAiConverter", instance.ShortName);
 
             var availableSettings = instance.GetAvailableSettings().ToArray();
             Console.WriteLine("AvailableSettings:");
@@ -109,10 +109,12 @@ namespace H.Containers.Tests
                 Console.WriteLine($" - {setting}");
             }
             CollectionAssert.AreEqual(
-                new[] { "FolderId", "OAuthToken", "Lang", "Topic", "ProfanityFilter", "Format", "SampleRateHertz" }, 
+                new[] { "Token" }, 
                 availableSettings);
 
-            //await BaseConvertersTests.ConvertTest(instance, "проверка_проверка_8000.wav", "проверка проверка", cancellationTokenSource.Token);
+            instance.SetSetting("Token", "KATWBG4RQCFNBLQTY6QQUKB2SH6EIELG");
+
+            await BaseConvertersTests.ConvertTest(instance, "проверка_проверка_8000.wav", "проверка", cancellationTokenSource.Token);
 
             try
             {
