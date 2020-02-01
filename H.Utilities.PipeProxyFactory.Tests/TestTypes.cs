@@ -1,23 +1,24 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace H.Utilities.Tests
 {
+    #region Events
+
     public delegate void TextDelegate(string text);
 
-    public interface ISimpleEventClass
+    public interface IEventsClass
     {
         event EventHandler<int> Event1;
         event TextDelegate? Event3;
 
         void RaiseEvent1();
         void RaiseEvent3();
-        int Method1(int input);
-        string Method2(string input);
     }
 
-    public class SimpleEventClass : ISimpleEventClass
+    public class EventsClass : IEventsClass
     {
         public event EventHandler<int>? Event1;
         public event TextDelegate? Event3;
@@ -31,17 +32,44 @@ namespace H.Utilities.Tests
         {
             Event3?.Invoke("555");
         }
+    }
 
-        public int Method1(int input)
+    #endregion
+
+    #region Methods
+
+    public interface IMethodsClass
+    {
+        int Echo(int input);
+        string HelloName(string input);
+        ICollection<int> IntegerCollection123();
+        ICollection<string> StringCollection123();
+    }
+
+    public class MethodsClass : IMethodsClass
+    {
+        public int Echo(int input)
         {
-            return 321 + input;
+            return input;
         }
 
-        public string Method2(string input)
+        public string HelloName(string name)
         {
-            return $"Hello, input = {input}";
+            return $"Hello {name}";
+        }
+
+        public ICollection<int> IntegerCollection123()
+        {
+            return new[] { 1, 2, 3 };
+        }
+
+        public ICollection<string> StringCollection123()
+        {
+            return new [] {"1", "2", "3"};
         }
     }
+
+    #endregion
 
     #region Async methods
 

@@ -14,12 +14,12 @@ namespace H.Utilities.Tests
         {
             using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-            await BaseTests.BaseInstanceTestAsync<ISimpleEventClass>(
-                GetFullName(typeof(SimpleEventClass)),
+            await BaseTests.BaseInstanceTestAsync<IMethodsClass>(
+                GetFullName(typeof(MethodsClass)),
                 (instance, cancellationToken) =>
                 {
-                    Assert.AreEqual(321 + 123, instance.Method1(123));
-                    Assert.AreEqual("Hello, input = 123", instance.Method2("123"));
+                    Assert.AreEqual(123, instance.Echo(123));
+                    Assert.AreEqual("Hello 123", instance.HelloName("123"));
 
                     return Task.CompletedTask;
                 },
@@ -31,8 +31,8 @@ namespace H.Utilities.Tests
         {
             using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-            await BaseTests.BaseInstanceTestAsync<ISimpleEventClass>(
-                GetFullName(typeof(SimpleEventClass)),
+            await BaseTests.BaseInstanceTestAsync<IEventsClass>(
+                GetFullName(typeof(EventsClass)),
                 async (instance, cancellationToken) =>
                 {
                     instance.Event1 += (sender, value) =>

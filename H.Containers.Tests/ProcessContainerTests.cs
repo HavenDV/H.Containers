@@ -92,6 +92,8 @@ namespace H.Containers.Tests
 
             Assert.AreEqual("YandexConverter", instance.ShortName);
 
+            //CollectionAssert.AreEqual(new[] { "YandexConverter" }, instance.GetAvailableSettings().ToArray());
+
             //await BaseConvertersTests.ConvertTest(instance, "проверка_проверка_8000.wav", "проверка проверка", cancellationTokenSource.Token);
 
             try
