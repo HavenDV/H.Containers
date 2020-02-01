@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -243,6 +244,16 @@ namespace H.Utilities
                 value = CreateSerializableException(exception);
             }
 
+            if (value is ICollection)
+            {
+                var type = value.GetType();
+                if (!type.IsArray)
+                {
+                    //value = typeof(Enumerable)
+                    //    .GetMethod(nameof(Enumerable.ToArray), BindingFlags.Static | BindingFlags.Public)?
+                    //    .Invoke(value, null);
+                }
+            }
             if (value is Task task)
             {
                 try
@@ -269,7 +280,16 @@ namespace H.Utilities
                 }
             }
 
-            await Connection.SendAsync($"{pipeNamePrefix}out", value, cancellationTokenSource.Token);
+            try
+            {
+                await Connection.SendAsync($"{pipeNamePrefix}out", value, cancellationTokenSource.Token);
+            }
+            catch (Exception exception)
+            {
+                value = CreateSerializableException(exception);
+
+                await Connection.SendAsync($"{pipeNamePrefix}out", value, cancellationTokenSource.Token);
+            }
         }
 
         private static Exception CreateSerializableException(Exception exception)
