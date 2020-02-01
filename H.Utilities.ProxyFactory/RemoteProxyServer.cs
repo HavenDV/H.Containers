@@ -233,27 +233,53 @@ namespace H.Utilities
                     return await Connection.ReceiveAsync<object?>($"{pipeNamePrefix}{i}", cancellationTokenSource.Token);
                 }));
 
-            object? value = methodInfo.Invoke(instance, args.ToArray());
+            object? value;
+            try
+            {
+                value = methodInfo.Invoke(instance, args.ToArray());
+            }
+            catch (Exception exception)
+            {
+                value = CreateSerializableException(exception);
+            }
+
             if (value is Task task)
             {
-                await task;
+                try
+                {
+                    await task;
 
-                var type = value.GetType();
-                var taskTypeName = type.BaseType?.GenericTypeArguments?.FirstOrDefault()?.FullName;
-                if (taskTypeName != "System.Threading.Tasks.VoidTaskResult")
-                {
-                    value = value
-                        .GetType()
-                        .GetProperty(nameof(Task<int>.Result), BindingFlags.Public | BindingFlags.Instance)?
-                        .GetValue(value);
+                    var type = value.GetType();
+                    var taskTypeName = type.BaseType?.GenericTypeArguments?.FirstOrDefault()?.FullName;
+                    if (taskTypeName != "System.Threading.Tasks.VoidTaskResult")
+                    {
+                        value = value
+                            .GetType()
+                            .GetProperty(nameof(Task<int>.Result), BindingFlags.Public | BindingFlags.Instance)?
+                            .GetValue(value);
+                    }
+                    else
+                    {
+                        value = null;
+                    }
                 }
-                else
+                catch (Exception exception)
                 {
-                    value = null;
+                    value = CreateSerializableException(exception);
                 }
             }
 
             await Connection.SendAsync($"{pipeNamePrefix}out", value, cancellationTokenSource.Token);
+        }
+
+        private static Exception CreateSerializableException(Exception exception)
+        {
+            if (exception.GetType().IsSerializable)
+            {
+                return exception;
+            }
+
+            return new Exception($"{exception}");
         }
 
         #endregion

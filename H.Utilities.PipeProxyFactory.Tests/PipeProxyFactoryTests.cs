@@ -77,6 +77,9 @@ namespace H.Utilities.Tests
                     await instance.NoValueTaskAsync(cancellationToken);
 
                     Assert.AreEqual(1, await instance.ValueTypeResultTaskWithResultEquals1Async(cancellationToken));
+
+                    await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () =>
+                        await instance.InvalidOperationExceptionAfterSecondTaskAsync(cancellationToken));
                 },
                 cancellationTokenSource.Token);
         }

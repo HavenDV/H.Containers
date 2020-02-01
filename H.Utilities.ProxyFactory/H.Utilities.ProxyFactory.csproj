@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <Version>0.6.3</Version>
+    <Version>0.6.4</Version>
     <Description>Features:
 - Create proxy objects that look exactly like the original objects
     </Description>
@@ -24,7 +24,7 @@
     <PackageProjectUrl>https://github.com/HavenDV/H.Containers</PackageProjectUrl>
     <RepositoryUrl>https://github.com/HavenDV/H.Containers</RepositoryUrl>
     <PackageTags>proxy objects, empty proxy, direct proxy, log method calls</PackageTags>
-    <PackageReleaseNotes>Fixed RemoteProxyFactory async methods bugs</PackageReleaseNotes>
+    <PackageReleaseNotes>Fixed catch and delivery of exceptions</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IncludeSymbols>true</IncludeSymbols>

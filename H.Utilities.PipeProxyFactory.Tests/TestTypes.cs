@@ -49,6 +49,7 @@ namespace H.Utilities.Tests
     {
         Task NoValueTaskAsync(CancellationToken cancellationToken = default);
         Task<int> ValueTypeResultTaskWithResultEquals1Async(CancellationToken cancellationToken = default);
+        Task InvalidOperationExceptionAfterSecondTaskAsync(CancellationToken cancellationToken = default);
     }
 
     public class AsyncMethodsClass : IAsyncMethodsClass
@@ -63,6 +64,13 @@ namespace H.Utilities.Tests
             await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
 
             return 1;
+        }
+
+        public async Task InvalidOperationExceptionAfterSecondTaskAsync(CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+
+            throw new InvalidOperationException("Custom exception message");
         }
     }
 

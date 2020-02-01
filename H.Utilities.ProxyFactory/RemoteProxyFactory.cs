@@ -221,6 +221,11 @@ namespace H.Utilities
                 }));
 
             var value = await Connection.ReceiveAsync<object?>($"{pipeNamePrefix}out", token);
+            if (value is Exception exception)
+            {
+                throw exception;
+            }
+
             var type = methodInfo.ReturnType;
             if (type == typeof(Task))
             {
