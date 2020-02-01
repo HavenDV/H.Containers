@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using H.Utilities.Tests.Extensions;
@@ -20,6 +21,8 @@ namespace H.Utilities.Tests
                 {
                     Assert.AreEqual(123, instance.Echo(123));
                     Assert.AreEqual("Hello 123", instance.HelloName("123"));
+                    CollectionAssert.AreEqual(new [] { 1, 2, 3 }, instance.IntegerCollection123().ToArray());
+                    CollectionAssert.AreEqual(new[] { "1", "2", "3" }, instance.StringCollection123().ToArray());
 
                     return Task.CompletedTask;
                 },
