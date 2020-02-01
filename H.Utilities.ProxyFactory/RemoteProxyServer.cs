@@ -249,9 +249,16 @@ namespace H.Utilities
                 var type = value.GetType();
                 if (!type.IsArray)
                 {
-                    //value = typeof(Enumerable)
-                    //    .GetMethod(nameof(Enumerable.ToArray), BindingFlags.Static | BindingFlags.Public)?
-                    //    .Invoke(value, null);
+                    var elementType = type.GetInterfaces()
+                        .FirstOrDefault(i => 
+                            i.Name.StartsWith(nameof(ICollection)) && 
+                            i.GenericTypeArguments.Any())?
+                        .GenericTypeArguments
+                        .FirstOrDefault();
+                    value = typeof(Enumerable)
+                        .GetMethod(nameof(Enumerable.ToArray), BindingFlags.Static | BindingFlags.Public)?
+                        .MakeGenericMethod(elementType)
+                        .Invoke(null, new []{ value });
                 }
             }
             if (value is Task task)

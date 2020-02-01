@@ -96,7 +96,15 @@ namespace H.Containers.Tests
 
             Assert.AreEqual("YandexConverter", instance.ShortName);
 
-            //CollectionAssert.AreEqual(new[] { "YandexConverter" }, instance.GetAvailableSettings().ToArray());
+            var availableSettings = instance.GetAvailableSettings().ToArray();
+            Console.WriteLine("AvailableSettings:");
+            foreach (var setting in availableSettings)
+            {
+                Console.WriteLine($" - {setting}");
+            }
+            CollectionAssert.AreEqual(
+                new[] { "FolderId", "OAuthToken", "Lang", "Topic", "ProfanityFilter", "Format", "SampleRateHertz" }, 
+                availableSettings);
 
             //await BaseConvertersTests.ConvertTest(instance, "проверка_проверка_8000.wav", "проверка проверка", cancellationTokenSource.Token);
 
