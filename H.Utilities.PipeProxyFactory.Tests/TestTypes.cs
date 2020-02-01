@@ -65,7 +65,12 @@ namespace H.Utilities.Tests
 
         public ICollection<string> StringCollection123()
         {
-            return new [] {"1", "2", "3"};
+            return new Dictionary<string, object?>
+            {
+                { "1", null },
+                { "2", null },
+                { "3", null },
+            }.Keys;
         }
     }
 
