@@ -18,6 +18,11 @@ namespace H.Containers
         public string Name { get; }
 
         /// <summary>
+        /// Only for methods without CancellationToken argument
+        /// </summary>
+        public CancellationToken MethodsCancellationToken { get; set; } = CancellationToken.None;
+
+        /// <summary>
         /// 
         /// </summary>
         public bool ForceUpdateApplication { get; set; }
@@ -53,6 +58,7 @@ namespace H.Containers
             Name = (string.IsNullOrWhiteSpace(name) ? null : "") ?? throw new ArgumentException("Name is empty", nameof(name));
 
             ProxyFactory.ExceptionOccurred += (sender, exception) => OnExceptionOccurred(exception);
+            ProxyFactory.MethodCalled += (sender, args) => args.CancellationToken = MethodsCancellationToken;
         }
 
         #endregion

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading;
 
 namespace H.Utilities.Args
 {
@@ -28,6 +29,11 @@ namespace H.Utilities.Args
         /// 
         /// </summary>
         public object? ReturnObject { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public CancellationToken CancellationToken { get; set; } = CancellationToken.None;
 
         /// <summary>
         /// 

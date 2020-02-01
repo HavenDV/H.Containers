@@ -94,7 +94,7 @@ namespace H.Utilities
 
                 try
                 {
-                    args.ReturnObject = await RunMethodAsync(args.MethodInfo, sender, args.Arguments.ToArray())
+                    args.ReturnObject = await RunMethodAsync(args.MethodInfo, sender, args.Arguments.ToArray(), args.CancellationToken)
                         .ConfigureAwait(false);
                 }
                 catch (Exception exception)
@@ -185,18 +185,18 @@ namespace H.Utilities
             await Connection.SendMessageAsync(message, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<object?> RunMethodAsync(MethodInfo methodInfo, object instance, object?[] args)
+        private async Task<object?> RunMethodAsync(MethodInfo methodInfo, object instance, object?[] args, CancellationToken cancellationToken = default)
         {
-            var cancellationToken = args.FirstOrDefault(arg => arg is CancellationToken) as CancellationToken? 
-                                    ?? CancellationToken.None;
+            var token = args.FirstOrDefault(arg => arg is CancellationToken) as CancellationToken? 
+                        ?? cancellationToken;
 
             var hash = GetHash(instance);
             var name = methodInfo.Name;
             var pipeNamePrefix = $"H.Containers.Process_{hash}_{name}_{Guid.NewGuid()}_";
 
-            await Connection.SendMessageAsync($"run_method {name} {hash} {pipeNamePrefix}", cancellationToken).ConfigureAwait(false);
+            await Connection.SendMessageAsync($"run_method {name} {hash} {pipeNamePrefix}", token).ConfigureAwait(false);
 
-            cancellationToken.Register(async () =>
+            token.Register(async () =>
             {
                 using var source = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
@@ -217,10 +217,10 @@ namespace H.Utilities
                         return;
                     }
 
-                    await Connection.SendAsync($"{pipeNamePrefix}{i}", arg, cancellationToken);
+                    await Connection.SendAsync($"{pipeNamePrefix}{i}", arg, token);
                 }));
 
-            var value = await Connection.ReceiveAsync<object?>($"{pipeNamePrefix}out", cancellationToken);
+            var value = await Connection.ReceiveAsync<object?>($"{pipeNamePrefix}out", token);
             var type = methodInfo.ReturnType;
             if (type == typeof(Task))
             {
