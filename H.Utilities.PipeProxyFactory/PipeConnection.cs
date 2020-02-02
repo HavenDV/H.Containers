@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using H.Pipes;
 using H.Pipes.Extensions;
+using H.Utilities.Messages;
 
 namespace H.Utilities
 {
@@ -14,7 +15,7 @@ namespace H.Utilities
         #region Properties
 
         private bool IsFactory { get; }
-        private IPipeConnection<string>? InternalConnection { get; set; }
+        private IPipeConnection<Message>? InternalConnection { get; set; }
 
         #endregion
 
@@ -23,7 +24,7 @@ namespace H.Utilities
         /// <summary>
         /// 
         /// </summary>
-        public event EventHandler<string>? MessageReceived;
+        public event EventHandler<Message>? MessageReceived;
 
         /// <summary>
         /// 
@@ -35,7 +36,7 @@ namespace H.Utilities
             ExceptionOccurred?.Invoke(this, exception);
         }
 
-        private void OnMessageReceived(string message)
+        private void OnMessageReceived(Message message)
         {
             MessageReceived?.Invoke(this, message);
         }
@@ -67,7 +68,7 @@ namespace H.Utilities
         {
             if (IsFactory)
             {
-                var client = new SingleConnectionPipeClient<string>(name);
+                var client = new SingleConnectionPipeClient<Message>(name);
                 client.MessageReceived += (sender, args) => OnMessageReceived(args.Message);
                 client.ExceptionOccurred += (sender, args) => OnExceptionOccurred(args.Exception);
 
@@ -77,7 +78,7 @@ namespace H.Utilities
             }
             else
             {
-                var server = new SingleConnectionPipeServer<string>(name);
+                var server = new SingleConnectionPipeServer<Message>(name);
                 server.MessageReceived += (sender, args) => OnMessageReceived(args.Message);
                 server.ExceptionOccurred += (sender, args) => OnExceptionOccurred(args.Exception);
 
@@ -93,7 +94,7 @@ namespace H.Utilities
         /// <param name="message"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
+        public async Task SendMessageAsync(Message message, CancellationToken cancellationToken = default)
         {
             InternalConnection = InternalConnection ?? throw new InvalidOperationException("InternalConnection is null");
 

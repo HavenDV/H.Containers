@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using H.Utilities.Args;
 using H.Utilities.Extensions;
+using H.Utilities.Messages;
 
 namespace H.Utilities
 {
@@ -23,7 +24,8 @@ namespace H.Utilities
 
         private IConnection Connection { get; }
         private EmptyProxyFactory EmptyProxyFactory { get; } = new EmptyProxyFactory();
-        private Dictionary<string, object> HashDictionary { get; } = new Dictionary<string, object>();
+        private Dictionary<object, Guid> GuidDictionary { get; } = new Dictionary<object, Guid>();
+        private Dictionary<Guid, object> ObjectsDictionary { get; } = new Dictionary<Guid, object>();
 
         #endregion
 
@@ -75,7 +77,7 @@ namespace H.Utilities
         public RemoteProxyFactory(IConnection connection)
         {
             Connection = connection ?? throw new ArgumentNullException(nameof(connection));
-            Connection.MessageReceived += (sender, message) => OnMessageReceived(message);
+            Connection.MessageReceived += async (sender, message) => await OnMessageReceived(message);
             Connection.ExceptionOccurred += (sender, exception) => OnExceptionOccurred(exception);
 
             EmptyProxyFactory.AsyncMethodCalled += async (sender, args) =>
@@ -134,7 +136,10 @@ namespace H.Utilities
         {
             path = path ?? throw new ArgumentNullException(nameof(path));
 
-            await Connection.SendMessageAsync($"load_assembly {path}", cancellationToken).ConfigureAwait(false);
+            await Connection.SendMessageAsync(new LoadAssemblyMessage
+            {
+                Path = path,
+            }, cancellationToken).ConfigureAwait(false);
 
             LoadedAssemblies.Add(path);
         }
@@ -152,10 +157,15 @@ namespace H.Utilities
             typeName = typeName ?? throw new ArgumentNullException(nameof(typeName));
 
             var instance = EmptyProxyFactory.CreateInstance<T>();
-            var hash = GetHash(instance);
-            HashDictionary.Add(hash, instance);
+            var guid = Guid.NewGuid();
+            ObjectsDictionary.Add(guid, instance);
+            GuidDictionary.Add(instance, guid);
 
-            await Connection.SendMessageAsync($"create_object {typeName} {hash}", cancellationToken).ConfigureAwait(false);
+            await Connection.SendMessageAsync(new CreateObjectMessage
+            {
+                Guid = guid,
+                TypeName = typeName,
+            }, cancellationToken).ConfigureAwait(false);
 
             return instance;
         }
@@ -172,8 +182,6 @@ namespace H.Utilities
 
         #region Private methods
 
-        private static string GetHash(object instance) => $"{instance.GetHashCode()}";
-
         /// <summary>
         /// 
         /// </summary>
@@ -182,19 +190,23 @@ namespace H.Utilities
         /// <returns></returns>
         public async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
         {
-            await Connection.SendMessageAsync(message, cancellationToken).ConfigureAwait(false);
+            await Connection.SendMessageAsync(new Message
+            {
+                Text = message,
+            }, cancellationToken).ConfigureAwait(false);
         }
 
         private async Task<object?> RunMethodAsync(MethodInfo methodInfo, object instance, object?[] args, CancellationToken cancellationToken = default)
         {
             var token = args.FirstOrDefault(arg => arg is CancellationToken) as CancellationToken? 
                         ?? cancellationToken;
-
-            var hash = GetHash(instance);
-            var name = methodInfo.Name;
-            var pipeNamePrefix = $"H.Containers.Process_{hash}_{name}_{Guid.NewGuid()}_";
-
-            await Connection.SendMessageAsync($"run_method {name} {hash} {pipeNamePrefix}", token).ConfigureAwait(false);
+            var message = new RunMethodMessage
+            {
+                ObjectGuid = GuidDictionary[instance],
+                MethodGuid = Guid.NewGuid(),
+                MethodName = methodInfo.Name,
+            };
+            await Connection.SendMessageAsync(message, token).ConfigureAwait(false);
 
             using var registration = token.Register(async () =>
             {
@@ -202,7 +214,12 @@ namespace H.Utilities
 
                 try
                 {
-                    await SendMessageAsync($"cancel_method {name} {hash}", source.Token);
+                    await Connection.SendMessageAsync(new CancelMethodMessage
+                    {
+                        ObjectGuid = message.ObjectGuid,
+                        MethodGuid = message.MethodGuid,
+                        MethodName = message.MethodName,
+                    }, source.Token);
                 }
                 catch (OperationCanceledException)
                 {
@@ -221,10 +238,10 @@ namespace H.Utilities
                         return;
                     }
 
-                    await Connection.SendAsync($"{pipeNamePrefix}{i}", arg, token);
+                    await Connection.SendAsync($"{message.ConnectionPrefix}{i}", arg, token);
                 }));
 
-            var value = await Connection.ReceiveAsync<object?>($"{pipeNamePrefix}out", token);
+            var value = await Connection.ReceiveAsync<object?>($"{message.ConnectionPrefix}out", token);
             if (value is Exception exception)
             {
                 throw exception;
@@ -248,25 +265,27 @@ namespace H.Utilities
             return value;
         }
 
-        private void OnMessageReceived(string message)
+        private async Task OnMessageReceived(Message message)
         {
             try
             {
                 message = message ?? throw new ArgumentNullException(nameof(message));
+                message.Text = message.Text ?? throw new ArgumentNullException($"{nameof(message.Text)}");
 
-                MessageReceived?.Invoke(this, message);
+                MessageReceived?.Invoke(this, message.Text);
 
-                var prefix = message.Split(' ').First();
-                var postfix = message.Replace(prefix, string.Empty).TrimStart();
-
-                switch (prefix)
+                switch (message)
                 {
-                    case "exception":
-                        OnExceptionOccurred(new Exception(postfix));
+                    case ExceptionMessage o:
+                        var exception = o.Exception ?? throw new ArgumentNullException(nameof(o.Exception));
+                        OnExceptionOccurred(exception);
                         break;
 
-                    case "raise_event":
-                        ProcessEventMessage(postfix);
+                    case RaiseEventMessage o:
+                        var objectGuid = o.ObjectGuid ?? throw new ArgumentNullException(nameof(o.ObjectGuid));
+                        var eventName = o.EventName ?? throw new ArgumentNullException(nameof(o.EventName));
+                        var connectionName = o.ConnectionName ?? throw new ArgumentNullException(nameof(o.ConnectionName));
+                        await RaiseEventAsync(objectGuid, eventName, connectionName);
                         break;
                 }
             }
@@ -276,27 +295,11 @@ namespace H.Utilities
             }
         }
 
-        private async void ProcessEventMessage(string message)
+        private async Task RaiseEventAsync(Guid objectGuid, string eventName, string connectionName, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var values = message.Split(' ');
-                var hash = values.ElementAtOrDefault(0) ?? throw new InvalidOperationException("Hash is null");
-                var eventName = values.ElementAtOrDefault(1) ?? throw new InvalidOperationException("EventName is null");
-                var pipeName = values.ElementAtOrDefault(2) ?? throw new InvalidOperationException("PipeName is null");
+            var args = await Connection.ReceiveAsync<object?[]>(connectionName, cancellationToken);
+            var instance = ObjectsDictionary[objectGuid];
 
-                await OnEventAsync(eventName, hash, pipeName);
-            }
-            catch (Exception exception)
-            {
-                OnExceptionOccurred(exception);
-            }
-        }
-
-        private async Task OnEventAsync(string eventName, string hash, string pipeName, CancellationToken cancellationToken = default)
-        {
-            var args = await Connection.ReceiveAsync<object?[]>(pipeName, cancellationToken);
-            var instance = HashDictionary[hash];
             instance.RaiseEvent(eventName, args);
         }
 

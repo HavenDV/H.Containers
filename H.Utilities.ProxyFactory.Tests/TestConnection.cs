@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using H.Utilities.Messages;
 
 namespace H.Utilities.Tests
 {
@@ -9,8 +10,8 @@ namespace H.Utilities.Tests
     {
         #region Properties
 
-        public ConcurrentQueue<string> IncomingMessagesQueue { get; }
-        public ConcurrentQueue<string> OutgoingMessagesQueue { get; }
+        public ConcurrentQueue<Message> IncomingMessagesQueue { get; }
+        public ConcurrentQueue<Message> OutgoingMessagesQueue { get; }
         public ConcurrentDictionary<string, object?> Dictionary { get; }
 
         private CancellationTokenSource CancellationTokenSource { get; } = new CancellationTokenSource();
@@ -19,13 +20,13 @@ namespace H.Utilities.Tests
 
         #region Events
 
-        public event EventHandler<string>? MessageReceived;
+        public event EventHandler<Message>? MessageReceived;
 
 #pragma warning disable 0067
         public event EventHandler<Exception>? ExceptionOccurred;
 #pragma warning restore 0067
 
-        private void OnMessageReceived(string message)
+        private void OnMessageReceived(Message message)
         {
             MessageReceived?.Invoke(this, message);
         }
@@ -35,8 +36,8 @@ namespace H.Utilities.Tests
         #region Constructors
 
         public TestConnection(
-            ConcurrentQueue<string> incomingMessagesQueue,
-            ConcurrentQueue<string> outgoingMessagesQueue,
+            ConcurrentQueue<Message> incomingMessagesQueue,
+            ConcurrentQueue<Message> outgoingMessagesQueue,
             ConcurrentDictionary<string, object?> dictionary)
         {
             IncomingMessagesQueue = incomingMessagesQueue;
@@ -72,7 +73,7 @@ namespace H.Utilities.Tests
             return Task.CompletedTask;
         }
 
-        public Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
+        public Task SendMessageAsync(Message message, CancellationToken cancellationToken = default)
         {
             OutgoingMessagesQueue.Enqueue(message);
 

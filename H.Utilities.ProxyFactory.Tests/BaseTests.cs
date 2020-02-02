@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using H.Utilities.Messages;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace H.Utilities.Tests
@@ -13,8 +14,8 @@ namespace H.Utilities.Tests
             CancellationToken cancellationToken)
             where T : class
         {
-            var factoryMessagesQueue = new ConcurrentQueue<string>();
-            var serverMessagesQueue = new ConcurrentQueue<string>();
+            var factoryMessagesQueue = new ConcurrentQueue<Message>();
+            var serverMessagesQueue = new ConcurrentQueue<Message>();
             var dictionary = new ConcurrentDictionary<string, object?>();
 
             var factoryConnection = new TestConnection(factoryMessagesQueue, serverMessagesQueue, dictionary);

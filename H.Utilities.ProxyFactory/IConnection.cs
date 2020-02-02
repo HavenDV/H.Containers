@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using H.Utilities.Messages;
 
 namespace H.Utilities
 {
@@ -14,7 +15,7 @@ namespace H.Utilities
         /// <summary>
         /// When a new internal message is received
         /// </summary>
-        event EventHandler<string>? MessageReceived;
+        event EventHandler<Message>? MessageReceived;
 
         /// <summary>
         /// When a exception is occurred
@@ -39,7 +40,7 @@ namespace H.Utilities
         /// <param name="message"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task SendMessageAsync(string message, CancellationToken cancellationToken = default);
+        Task SendMessageAsync(Message message, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Sends data of a certain type to the other side

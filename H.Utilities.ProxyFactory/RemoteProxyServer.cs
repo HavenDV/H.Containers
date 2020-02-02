@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using H.Utilities.Extensions;
+using H.Utilities.Messages;
 
 namespace H.Utilities
 {
@@ -19,7 +20,7 @@ namespace H.Utilities
         private IConnection Connection { get; }
 
         private List<Assembly> Assemblies { get; } = AppDomain.CurrentDomain.GetAssemblies().ToList();
-        private Dictionary<string, object> ObjectsDictionary { get; } = new Dictionary<string, object>();
+        private Dictionary<Guid, object> ObjectsDictionary { get; } = new Dictionary<Guid, object>();
 
         #endregion
 
@@ -87,7 +88,10 @@ namespace H.Utilities
         /// <returns></returns>
         public async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
         {
-            await Connection.SendMessageAsync(message, cancellationToken).ConfigureAwait(false);
+            await Connection.SendMessageAsync(new Message
+            {
+                Text = message,
+            }, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -100,7 +104,10 @@ namespace H.Utilities
         {
             try
             {
-                await Connection.SendMessageAsync($"exception {factoryException.Message} StackTrace: {factoryException.StackTrace}", cancellationToken);
+                await Connection.SendMessageAsync(new ExceptionMessage
+                {
+                    Exception = CreateSerializableException(factoryException),
+                }, cancellationToken);
             }
             catch (Exception exception)
             {
@@ -109,37 +116,48 @@ namespace H.Utilities
         }
 
         private async Task OnEventOccurredAsync(
-            string hash, string eventName, string connectionName, object?[] args,
+            Guid objectGuid, string eventName, Guid eventGuid, object?[] args,
             CancellationToken cancellationToken = default)
         {
-            await Connection.SendMessageAsync($"raise_event {hash} {eventName} {connectionName}", cancellationToken);
+            var message = new RaiseEventMessage
+            {
+                ObjectGuid = objectGuid,
+                EventName = eventName,
+                EventGuid = eventGuid,
+            };
+            await Connection.SendMessageAsync(message, cancellationToken);
 
-            await Connection.SendAsync(connectionName, args, cancellationToken);
+            await Connection.SendAsync(message.ConnectionName, args, cancellationToken);
         }
 
-        private async Task OnMessageReceivedAsync(string message)
+        private async Task OnMessageReceivedAsync(Message message)
         {
             try
             {
                 message = message ?? throw new ArgumentNullException(nameof(message));
+                message.Text = message.Text ?? throw new ArgumentNullException($"{nameof(message.Text)}");
 
-                OnMessageReceived(message);
+                OnMessageReceived(message.Text);
 
-                var prefix = message.Split(' ').First();
-                var postfix = message.Replace(prefix, string.Empty).TrimStart();
-
-                switch (prefix)
+                switch (message)
                 {
-                    case "load_assembly":
-                        LoadAssembly(postfix);
+                    case LoadAssemblyMessage o:
+                        var path = o.Path ?? throw new ArgumentNullException(nameof(o.Path));
+                        LoadAssembly(path);
                         break;
 
-                    case "create_object":
-                        CreateObject(postfix);
+                    case CreateObjectMessage o:
+                        var guid = o.Guid ?? throw new ArgumentNullException(nameof(o.Guid));
+                        var typeName = o.TypeName ?? throw new ArgumentNullException(nameof(o.TypeName));
+                        CreateObject(guid, typeName);
                         break;
 
-                    case "run_method":
-                        await RunMethodAsync(postfix);
+                    case RunMethodMessage o:
+                        var objectGuid = o.ObjectGuid ?? throw new ArgumentNullException(nameof(o.ObjectGuid));
+                        var methodName = o.MethodName ?? throw new ArgumentNullException(nameof(o.MethodName));
+                        var methodGuid = o.MethodGuid ?? throw new ArgumentNullException(nameof(o.MethodGuid));
+                        var connectionPrefix = o.ConnectionPrefix ?? throw new ArgumentNullException(nameof(o.ConnectionPrefix));
+                        await RunMethodAsync(objectGuid, methodName, methodGuid, connectionPrefix);
                         break;
                 }
             }
@@ -166,14 +184,11 @@ namespace H.Utilities
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="postfix"></param>
-        public void CreateObject(string postfix)
+        /// <param name="guid"></param>
+        /// <param name="typeName"></param>
+        public void CreateObject(Guid guid, string typeName)
         {
             ////throw new Exception(string.Join(" ", assembly.GetTypes().Select(i => $"{i.FullName}")));
-
-            var values = postfix.Split(' ');
-            var typeName = values.ElementAtOrDefault(0) ?? throw new InvalidOperationException("Name is null");
-            var hash = values.ElementAtOrDefault(1) ?? throw new InvalidOperationException("Hash is null");
 
             var assembly = Assemblies.FirstOrDefault(i =>
                                i.GetTypes().Any(type => type.FullName == typeName))
@@ -191,8 +206,7 @@ namespace H.Utilities
                             args[0] = null;
                         }
 
-                        await OnEventOccurredAsync(hash, name,
-                            $"H.Containers.Process_{hash}_{name}_Event_{Guid.NewGuid()}", args);
+                        await OnEventOccurredAsync(guid, name, Guid.NewGuid(), args);
                     }
                     catch (Exception exception)
                     {
@@ -201,24 +215,22 @@ namespace H.Utilities
                 });
             }
 
-            ObjectsDictionary.Add(hash, instance);
+            ObjectsDictionary.Add(guid, instance);
         }
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="postfix"></param>
+        /// <param name="objectGuid"></param>
+        /// <param name="methodName"></param>
+        /// <param name="methodGuid"></param>
+        /// <param name="connectionPrefix"></param>
         /// <returns></returns>
-        public async Task RunMethodAsync(string postfix)
+        public async Task RunMethodAsync(Guid objectGuid, string methodName, Guid methodGuid, string connectionPrefix)
         {
-            var values = postfix.Split(' ');
-            var name = values.ElementAtOrDefault(0) ?? throw new InvalidOperationException("Name is null");
-            var hash = values.ElementAtOrDefault(1) ?? throw new InvalidOperationException("Hash is null");
-            var pipeNamePrefix = values.ElementAtOrDefault(2) ?? throw new InvalidOperationException("PipeNamePrefix is null");
-
-            var instance = ObjectsDictionary[hash];
-            var methodInfo = instance.GetType().GetMethod(name)
-                             ?? throw new InvalidOperationException($"Method is not found: {name}");
+            var instance = ObjectsDictionary[objectGuid];
+            var methodInfo = instance.GetType().GetMethod(methodName)
+                             ?? throw new InvalidOperationException($"Method is not found: {methodName}");
 
             using var cancellationTokenSource = new CancellationTokenSource();
             var args = await Task.WhenAll(methodInfo.GetParameters()
@@ -231,7 +243,7 @@ namespace H.Utilities
                     }
 
                     // ReSharper disable once AccessToDisposedClosure
-                    return await Connection.ReceiveAsync<object?>($"{pipeNamePrefix}{i}", cancellationTokenSource.Token);
+                    return await Connection.ReceiveAsync<object?>($"{connectionPrefix}{i}", cancellationTokenSource.Token);
                 }));
 
             object? value;
@@ -289,13 +301,13 @@ namespace H.Utilities
 
             try
             {
-                await Connection.SendAsync($"{pipeNamePrefix}out", value, cancellationTokenSource.Token);
+                await Connection.SendAsync($"{connectionPrefix}out", value, cancellationTokenSource.Token);
             }
             catch (Exception exception)
             {
                 value = CreateSerializableException(exception);
 
-                await Connection.SendAsync($"{pipeNamePrefix}out", value, cancellationTokenSource.Token);
+                await Connection.SendAsync($"{connectionPrefix}out", value, cancellationTokenSource.Token);
             }
         }
 

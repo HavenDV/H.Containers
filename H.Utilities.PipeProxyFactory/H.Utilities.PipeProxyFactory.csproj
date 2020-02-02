@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <Version>0.6.6</Version>
+    <Version>0.6.7</Version>
     <Description>Features:
 - Create proxy objects that look exactly like the original objects
 - Proxy target can be located anywhere where there is access to pipes
@@ -27,7 +27,7 @@
     <PackageProjectUrl>https://github.com/HavenDV/H.Containers</PackageProjectUrl>
     <RepositoryUrl>https://github.com/HavenDV/H.Containers</RepositoryUrl>
     <PackageTags>proxy objects, direct proxy, pipe proxy</PackageTags>
-    <PackageReleaseNotes>Fixed CancellationToken.Register disposing</PackageReleaseNotes>
+    <PackageReleaseNotes>Added strong typed messages for RemoteProxyFactory connection</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IncludeSymbols>true</IncludeSymbols>
