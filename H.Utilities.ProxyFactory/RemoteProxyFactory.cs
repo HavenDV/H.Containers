@@ -196,7 +196,7 @@ namespace H.Utilities
 
             await Connection.SendMessageAsync($"run_method {name} {hash} {pipeNamePrefix}", token).ConfigureAwait(false);
 
-            token.Register(async () =>
+            using var registration = token.Register(async () =>
             {
                 using var source = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 

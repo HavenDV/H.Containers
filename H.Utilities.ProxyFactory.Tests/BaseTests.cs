@@ -23,7 +23,7 @@ namespace H.Utilities.Tests
             var receivedException = (Exception?)null;
             using var cancellationTokenSource = new CancellationTokenSource();
             // ReSharper disable once AccessToDisposedClosure
-            cancellationToken.Register(() => cancellationTokenSource.Cancel());
+            await using var registration = cancellationToken.Register(() => cancellationTokenSource.Cancel());
 
             using var factory = new RemoteProxyFactory(factoryConnection);
             factory.ExceptionOccurred += (sender, exception) =>

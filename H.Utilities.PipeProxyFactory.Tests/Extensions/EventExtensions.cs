@@ -25,7 +25,7 @@ namespace H.Utilities.Tests.Extensions
 
         /// <summary>
         /// Asynchronously expects <see langword="event"/> until they occur or until canceled <br/>
-        /// <![CDATA[Version: 1.0.0.1]]> <br/>
+        /// <![CDATA[Version: 1.0.0.2]]> <br/>
         /// <![CDATA[Dependency: WaitObject]]> <br/>
         /// </summary>
         /// <param name="value"></param>
@@ -45,7 +45,7 @@ namespace H.Utilities.Tests.Extensions
                             ?? throw new ArgumentException($"Event \"{eventName}\" is not found");
 
             var taskCompletionSource = new TaskCompletionSource<T>();
-            cancellationToken.Register(() => taskCompletionSource.TrySetCanceled());
+            await using var registration = cancellationToken.Register(() => taskCompletionSource.TrySetCanceled());
 
             var waitObject = new WaitObject<T>
             {
@@ -100,7 +100,7 @@ namespace H.Utilities.Tests.Extensions
 
         /// <summary>
         /// Asynchronously expects <see langword="event"/> until they occur or until canceled <br/>
-        /// <![CDATA[Version: 1.0.0.1]]> <br/>
+        /// <![CDATA[Version: 1.0.0.2]]> <br/>
         /// <![CDATA[Dependency: WaitObject]]> <br/>
         /// </summary>
         /// <param name="instance"></param>
@@ -141,7 +141,7 @@ namespace H.Utilities.Tests.Extensions
                 parameters);
             var @delegate = handlerExpression.Compile();
 
-            cancellationToken.Register(() => taskCompletionSource.TrySetCanceled());
+            await using var registration = cancellationToken.Register(() => taskCompletionSource.TrySetCanceled());
 
             try
             {
