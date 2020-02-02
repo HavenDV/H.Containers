@@ -54,7 +54,7 @@ namespace H.Containers.Tests
 
             try
             {
-                await Task.Delay(Timeout.InfiniteTimeSpan, cancellationTokenSource.Token);
+                await Task.Delay(TimeSpan.FromSeconds(1), cancellationTokenSource.Token);
             }
             catch (OperationCanceledException)
             {
@@ -70,7 +70,7 @@ namespace H.Containers.Tests
         public async Task RealTest()
         {
             var receivedException = (Exception?)null;
-            using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(15));
             await using var container = new ProcessContainer(nameof(ProcessContainerTests))
             {
                 MethodsCancellationToken = cancellationTokenSource.Token,
@@ -118,7 +118,7 @@ namespace H.Containers.Tests
 
             try
             {
-                await Task.Delay(Timeout.InfiniteTimeSpan, cancellationTokenSource.Token);
+                await Task.Delay(TimeSpan.FromSeconds(1), cancellationTokenSource.Token);
             }
             catch (OperationCanceledException)
             {
