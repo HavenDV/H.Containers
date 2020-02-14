@@ -8,7 +8,7 @@ namespace H.Utilities.Tests.Extensions
 {
     /// <summary>
     /// Extensions that work with <see langword="event"/> <br/>
-    /// <![CDATA[Version: 1.0.0.1]]> <br/>
+    /// <![CDATA[Version: 1.0.0.2]]> <br/>
     /// </summary>
     public static class EventExtensions
     {
@@ -72,7 +72,7 @@ namespace H.Utilities.Tests.Extensions
 
         /// <summary>
         /// Asynchronously expects <see langword="event"/> until they occur or until canceled <br/>
-        /// <![CDATA[Version: 1.0.0.1]]> <br/>
+        /// <![CDATA[Version: 1.0.0.2]]> <br/>
         /// <![CDATA[Dependency: WaitEventAsync(this object value, string eventName, CancellationToken cancellationToken = default)]]> <br/>
         /// </summary>
         /// <param name="value"></param>
@@ -157,7 +157,7 @@ namespace H.Utilities.Tests.Extensions
 
         /// <summary>
         /// Asynchronously expects <see langword="event"/> until they occur or until canceled <br/>
-        /// <![CDATA[Version: 1.0.0.1]]> <br/>
+        /// <![CDATA[Version: 1.0.0.2]]> <br/>
         /// <![CDATA[Dependency: WaitEventAsync(this object instance, string eventName, CancellationToken cancellationToken = default)]]> <br/>
         /// </summary>
         /// <param name="value"></param>
