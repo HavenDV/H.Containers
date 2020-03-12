@@ -22,7 +22,7 @@ namespace H.Containers.Tests
 
             foreach (var type in await container.GetTypesAsync(cancellationToken))
             {
-                Console.WriteLine($"Type: {type.FullName}");
+                Console.WriteLine($"Type: {type}");
             }
 
             await container.StopAsync(cancellationToken: cancellationToken);

@@ -8,12 +8,14 @@
   
   <ItemGroup>
     <None Remove="TestFiles\H.NET.Core.dll" />
+    <None Remove="TestFiles\H.Notifiers.RssNotifier.zip" />
     <None Remove="TestFiles\WitAiConverter.zip" />
     <None Remove="TestFiles\YandexConverter.zip" />
   </ItemGroup>
   
   <ItemGroup>
     <EmbeddedResource Include="TestFiles\H.NET.Core.dll" />
+    <EmbeddedResource Include="TestFiles\H.Notifiers.RssNotifier.zip" />
     <EmbeddedResource Include="TestFiles\WitAiConverter.zip" />
     <EmbeddedResource Include="TestFiles\проверка_проверка_8000.wav" />
   </ItemGroup>
