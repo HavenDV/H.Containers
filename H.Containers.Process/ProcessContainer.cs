@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using H.Utilities;
@@ -153,9 +154,9 @@ namespace H.Containers
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public Task<Type[]> GetTypesAsync(CancellationToken cancellationToken = default)
+        public async Task<IList<string>> GetTypesAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new Type[0]);
+            return await ProxyFactory.GetTypesAsync(cancellationToken);
         }
 
         /// <summary>
@@ -213,7 +214,7 @@ namespace H.Containers
         /// </summary>
         public void Dispose()
         {
-            StopAsync().Wait();
+            StopAsync(cancellationToken: MethodsCancellationToken).Wait(MethodsCancellationToken);
         }
 
         /// <summary>
@@ -222,7 +223,7 @@ namespace H.Containers
         /// <returns></returns>
         public async ValueTask DisposeAsync()
         {
-            await StopAsync();
+            await StopAsync(cancellationToken: MethodsCancellationToken);
         }
 
         #endregion

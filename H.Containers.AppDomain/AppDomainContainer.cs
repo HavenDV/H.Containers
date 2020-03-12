@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -59,14 +60,16 @@ namespace H.Containers
             return Task.CompletedTask;
         }
 
-        public Task<Type[]> GetTypesAsync(CancellationToken cancellationToken = default)
+        public Task<IList<string>> GetTypesAsync(CancellationToken cancellationToken = default)
         {
             Assembly = Assembly ?? throw new InvalidOperationException("Assembly is not loaded");
 
-            var types = Assembly.GetTypes()
+            var types = Assembly
+                .GetTypes()
+                .Select(type => type.FullName ?? string.Empty)
                 .ToArray();
 
-            return Task.FromResult(types);
+            return Task.FromResult<IList<string>>(types);
         }
 
         public Task StopAsync(TimeSpan? timeout = default, CancellationToken cancellationToken = default)

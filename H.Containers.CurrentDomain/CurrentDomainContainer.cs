@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -83,14 +84,16 @@ namespace H.Containers
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public Task<Type[]> GetTypesAsync(CancellationToken cancellationToken = default)
+        public Task<IList<string>> GetTypesAsync(CancellationToken cancellationToken = default)
         {
             Assembly = Assembly ?? throw new InvalidOperationException("Assembly is not loaded");
 
-            var types = Assembly.GetTypes()
+            var types = Assembly
+                .GetTypes()
+                .Select(type => type.FullName ?? string.Empty)
                 .ToArray();
 
-            return Task.FromResult(types);
+            return Task.FromResult<IList<string>>(types);
         }
 
         /// <summary>

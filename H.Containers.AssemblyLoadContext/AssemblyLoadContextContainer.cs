@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Loader;
 using System.Threading;
@@ -55,16 +56,17 @@ namespace H.Containers
             return Task.CompletedTask;
         }
 
-        public Task<Type[]> GetTypesAsync(CancellationToken cancellationToken = default)
+        public Task<IList<string>> GetTypesAsync(CancellationToken cancellationToken = default)
         {
             AssemblyLoadContext = AssemblyLoadContext ?? throw new InvalidOperationException("Container is not started");
 
             var types = AssemblyLoadContext
                 .Assemblies
                 .SelectMany(assembly => assembly.GetTypes())
+                .Select(type => type.FullName ?? string.Empty)
                 .ToArray();
 
-            return Task.FromResult(types);
+            return Task.FromResult<IList<string>>(types);
         }
 
         public Task StopAsync(TimeSpan? timeout = default, CancellationToken cancellationToken = default)

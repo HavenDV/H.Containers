@@ -20,6 +20,7 @@ namespace H.Utilities
         private IConnection Connection { get; }
 
         private List<Assembly> Assemblies { get; } = AppDomain.CurrentDomain.GetAssemblies().ToList();
+        private List<Assembly> LoadedAssemblies { get; } = new List<Assembly>();
         private Dictionary<Guid, object> ObjectsDictionary { get; } = new Dictionary<Guid, object>();
 
         #endregion
@@ -146,6 +147,10 @@ namespace H.Utilities
                         LoadAssembly(path);
                         break;
 
+                    case GetTypesMessage _:
+                        await GetTypesAsync();
+                        break;
+
                     case CreateObjectMessage o:
                         var guid = o.Guid ?? throw new ArgumentNullException(nameof(o.Guid));
                         var typeName = o.TypeName ?? throw new ArgumentNullException(nameof(o.TypeName));
@@ -179,6 +184,39 @@ namespace H.Utilities
             var assembly = Assembly.LoadFrom(path);
 
             Assemblies.Add(assembly);
+            LoadedAssemblies.Add(assembly);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task GetTypesAsync(CancellationToken cancellationToken = default)
+        {
+            object? value;
+            try
+            {
+                value = LoadedAssemblies
+                    .SelectMany(assembly => assembly.GetTypes())
+                    .Select(type => type.FullName ?? string.Empty)
+                    .ToArray();
+            }
+            catch (Exception exception)
+            {
+                value = CreateSerializableException(exception);
+            }
+
+            try
+            {
+                await Connection.SendAsync("GetTypes", value, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                value = CreateSerializableException(exception);
+
+                await Connection.SendAsync("GetTypes", value, cancellationToken);
+            }
         }
 
         /// <summary>

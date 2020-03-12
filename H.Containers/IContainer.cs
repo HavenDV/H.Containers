@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -46,7 +47,7 @@ namespace H.Containers
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<Type[]> GetTypesAsync(CancellationToken cancellationToken = default);
+        Task<IList<string>> GetTypesAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 

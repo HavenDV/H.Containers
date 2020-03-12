@@ -128,6 +128,27 @@ namespace H.Utilities
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <returns></returns>
+        public async Task<IList<string>> GetTypesAsync(CancellationToken cancellationToken = default)
+        {
+            await Connection.SendMessageAsync(new GetTypesMessage(), cancellationToken)
+                .ConfigureAwait(false);
+
+            var value = await Connection.ReceiveAsync<object?>("GetTypes", cancellationToken);
+            
+            return value switch
+            {
+                string[] typeNames => typeNames,
+                Exception exception => throw exception,
+                _ => throw new InvalidOperationException($"Invalid return type: {value?.GetType()}")
+            };
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="path"></param>
         /// <param name="cancellationToken"></param>
         /// <exception cref="ArgumentNullException"></exception>
