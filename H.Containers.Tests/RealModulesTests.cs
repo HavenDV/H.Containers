@@ -32,7 +32,7 @@ namespace H.Containers.Tests
         {
             await BaseModuleTest<INotifier>(
                 "H.Notifiers.RssNotifier", 
-                "H.NET.Notifiers.RssNotifier",
+                "H.Notifiers.RssNotifier",
                 "RssNotifier",
                 async (instance, token) =>
                 {
