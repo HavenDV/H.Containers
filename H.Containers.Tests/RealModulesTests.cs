@@ -34,9 +34,15 @@ namespace H.Containers.Tests
                 "H.Notifiers.RssNotifier", 
                 "H.NET.Notifiers.RssNotifier",
                 "RssNotifier",
-                (instance, token) =>
+                async (instance, token) =>
                 {
-                    return Task.CompletedTask;
+                    instance.SetSetting("IntervalInMilliseconds", "1000");
+                    instance.SetSetting("Url", "https://www.upwork.com/ab/feed/topics/rss?securityToken=3046355554bbd7e304e77a4f04ec54ff90dcfe94eb4bb6ce88c120b2a660a42c47a42de8cfd7db2f3f4962ccb8c9a8d1bb2bff326e55b5b464816c9919c4e66c&userUid=749097038387695616&orgUid=749446993539981313");
+                    
+                    await Task.Delay(TimeSpan.FromSeconds(5), token);
+
+                    var value = instance.GetModuleVariableValue("$rss_last_title$");
+                    Console.WriteLine($"Rss Last Title: {value}");
                 });
         }
 
@@ -79,7 +85,7 @@ namespace H.Containers.Tests
             var types = await container.GetTypesAsync(cancellationTokenSource.Token);
             ShowList(types, "Available types");
 
-            var instance = await container.CreateObjectAsync<T>(typeName, cancellationTokenSource.Token);
+            using var instance = await container.CreateObjectAsync<T>(typeName, cancellationTokenSource.Token);
             Assert.IsNotNull(instance);
 
             Assert.AreEqual(shortName, instance.ShortName);
