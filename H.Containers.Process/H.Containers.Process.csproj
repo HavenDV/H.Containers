@@ -35,7 +35,7 @@
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <Version>0.3.6</Version>
+    <Version>0.3.7</Version>
     <Description>Features:
 - You can run any object in another process in several lines
 - The created object looks like a real one (see ProxyFactory)
@@ -50,7 +50,7 @@ Limitations:
     <PackageProjectUrl>https://github.com/HavenDV/H.Containers</PackageProjectUrl>
     <RepositoryUrl>https://github.com/HavenDV/H.Containers</RepositoryUrl>
     <PackageTags>run code in separate process, process, containers, proxy objects, direct proxy</PackageTags>
-    <PackageReleaseNotes>Changed TargetFramework to .NET Standard 2.0(the process still requires the installed .net core 3.1 environment to run)</PackageReleaseNotes>
+    <PackageReleaseNotes>Added GetTypes implementantion</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IncludeSymbols>true</IncludeSymbols>
