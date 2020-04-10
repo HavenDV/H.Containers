@@ -113,12 +113,14 @@ namespace H.Utilities
             foreach (var interfaceType in baseType.GetInterfaces())
             {
                 GenerateMethods(typeBuilder, interfaceType);
+                //GenerateProperties(typeBuilder, interfaceType);
                 GenerateEvents(typeBuilder, interfaceType);
             }
 
             for (Type? type = baseType; type != null;)
             {
                 GenerateMethods(typeBuilder, type);
+                //GenerateProperties(typeBuilder, type);
                 GenerateEvents(typeBuilder, type);
 
                 type = type.BaseType;
@@ -134,6 +136,8 @@ namespace H.Utilities
             var ignoredMethods = new List<string>();
             ignoredMethods.AddRange(baseType.GetEvents().Select(i => $"add_{i.Name}"));
             ignoredMethods.AddRange(baseType.GetEvents().Select(i => $"remove_{i.Name}"));
+            //ignoredMethods.AddRange(baseType.GetProperties().Select(i => $"get_{i.Name}"));
+            //ignoredMethods.AddRange(baseType.GetProperties().Select(i => $"set_{i.Name}"));
 
             foreach (var methodInfo in baseType.GetMethods())
             {
@@ -254,6 +258,54 @@ namespace H.Utilities
 
         #region Events
 
+        /*
+
+        private void GenerateProperties(TypeBuilder typeBuilder, Type baseType)
+        {
+            foreach (var info in baseType.GetProperties())
+            {
+                var type = info.PropertyType;
+                var fieldBuilder = typeBuilder.DefineField($"_{info.Name}", type, FieldAttributes.Private);
+                var builder = typeBuilder.DefineProperty(info.Name, info.Attributes, info.PropertyType,
+                    info.GetRequiredCustomModifiers());
+
+                if (info.CanRead)
+                {
+                    var getMethod = typeBuilder.DefineMethod($"get_{info.Name}",
+                        MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.SpecialName | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+                        CallingConventions.Standard | CallingConventions.HasThis,
+                        type,
+                        null);
+                    var getGenerator = getMethod.GetILGenerator();
+                    GenerateMethod(getGenerator, info.GetMethod);
+                    //getGenerator.Emit(OpCodes.Ldarg_0);
+                    //getGenerator.Emit(OpCodes.Ldfld, fieldBuilder);
+                    //getGenerator.Emit(OpCodes.Ret);
+
+                    builder.SetGetMethod(getMethod);
+                }
+
+                if (info.CanWrite)
+                {
+                    var setMethod = typeBuilder.DefineMethod($"set_{info.Name}",
+                        MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.SpecialName | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+                        CallingConventions.Standard | CallingConventions.HasThis,
+                        typeof(void),
+                        new[] { type });
+                    var setGenerator = setMethod.GetILGenerator();
+                    GenerateMethod(setGenerator, info.SetMethod);
+                    //setGenerator.Emit(OpCodes.Ldarg_0);
+                    //setGenerator.Emit(OpCodes.Ldfld, fieldBuilder);
+                    //setGenerator.Emit(OpCodes.Ldarg_1);
+                    //setGenerator.Emit(OpCodes.Stfld, fieldBuilder);
+                    //setGenerator.Emit(OpCodes.Ret);
+                    builder.SetSetMethod(setMethod);
+                }
+            }
+        }
+
+        */
+
         private void GenerateEvents(TypeBuilder typeBuilder, Type baseType)
         {
             foreach (var info in baseType.GetEvents())
@@ -300,7 +352,7 @@ namespace H.Utilities
                 eventBuilder.SetRemoveOnMethod(removeMethod);
 
                 var methodInfo = handlerType.GetMethodInfo("Invoke");
-                var parameterTypes = methodInfo
+                var parameterTypes = methodInfo 
                     .GetParameters()
                     .Select(parameter => parameter.ParameterType)
                     .ToArray();
