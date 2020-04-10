@@ -194,6 +194,20 @@ namespace H.Utilities
         /// <summary>
         /// 
         /// </summary>
+        /// <typeparam name="TBase"></typeparam>
+        /// <typeparam name="TInterface"></typeparam>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<TInterface> CreateInstanceAsync<TBase, TInterface>(CancellationToken cancellationToken = default)
+            where TBase : class
+            where TInterface : class
+        {
+            return await CreateInstanceAsync<TInterface>(typeof(TBase).FullName, cancellationToken);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public void Dispose()
         {
             Connection.Dispose();
