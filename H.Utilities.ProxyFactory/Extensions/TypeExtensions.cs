@@ -83,9 +83,9 @@ namespace H.Utilities.Extensions
         /// <returns></returns>
         public static T GetDefault<T>()
         {
-#pragma warning disable CS8653 // A default expression introduces a null value for a type parameter.
+#pragma warning disable CS8603 // A default expression introduces a null value for a type parameter.
             return default;
-#pragma warning restore CS8653 // A default expression introduces a null value for a type parameter.
+#pragma warning restore CS8603 // A default expression introduces a null value for a type parameter.
         }
     }
 }
