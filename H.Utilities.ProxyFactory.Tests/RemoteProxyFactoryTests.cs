@@ -81,6 +81,27 @@ namespace H.Utilities.Tests
                 cancellationTokenSource.Token);
         }
 
+        public interface IException
+        {
+            public string Message { get; set; }
+        }
+
+        [TestMethod]
+        public async Task ExceptionClassTest()
+        {
+            using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+            await BaseTests.BaseInstanceRemoteTestAsync<IException>(
+                GetFullName(typeof(Exception)),
+                (instance, cancellationToken) =>
+                {
+                    Assert.AreEqual("Exception of type 'System.Exception' was thrown.", instance.Message);
+
+                    return Task.CompletedTask;
+                },
+                cancellationTokenSource.Token);
+        }
+
         private static string GetFullName(Type type)
         {
             return type.FullName ??
