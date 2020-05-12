@@ -42,6 +42,11 @@ namespace H.Containers
 
         #region Public methods
 
+        public Task InitializeAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+
         public Task StartAsync(CancellationToken cancellationToken = default)
         {
             AppDomain = AppDomain.CreateDomain(Name);

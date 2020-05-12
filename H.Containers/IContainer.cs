@@ -21,11 +21,21 @@ namespace H.Containers
 
         #region Events
 
-        //event EventHandler<Exception>? ExceptionOccurred;
+        /// <summary>
+        /// 
+        /// </summary>
+        event EventHandler<Exception>? ExceptionOccurred;
 
         #endregion
 
         #region Public methods
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task InitializeAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 

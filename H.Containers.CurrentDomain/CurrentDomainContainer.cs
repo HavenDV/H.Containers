@@ -56,6 +56,11 @@ namespace H.Containers
 
         #region Public methods
 
+        public Task InitializeAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+
         /// <summary>
         /// 
         /// </summary>
