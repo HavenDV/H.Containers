@@ -38,6 +38,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.Utilities.PipeProxyFactor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.Utilities.PipeProxyFactory.Tests", "H.Utilities.PipeProxyFactory.Tests\H.Utilities.PipeProxyFactory.Tests.csproj", "{7B88138F-6A2E-4687-9A4A-4C9035AC7352}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.Modules", "H.Modules\H.Modules.csproj", "{1748A7B0-AD2A-4E5D-A6CE-3F218BFB2279}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.Modules.Tests", "H.Modules.Tests\H.Modules.Tests.csproj", "{B5F7767A-F3F7-4AFF-A3EE-8AC4E14684DF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -88,6 +92,14 @@ Global
 		{7B88138F-6A2E-4687-9A4A-4C9035AC7352}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7B88138F-6A2E-4687-9A4A-4C9035AC7352}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7B88138F-6A2E-4687-9A4A-4C9035AC7352}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1748A7B0-AD2A-4E5D-A6CE-3F218BFB2279}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1748A7B0-AD2A-4E5D-A6CE-3F218BFB2279}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1748A7B0-AD2A-4E5D-A6CE-3F218BFB2279}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1748A7B0-AD2A-4E5D-A6CE-3F218BFB2279}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5F7767A-F3F7-4AFF-A3EE-8AC4E14684DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5F7767A-F3F7-4AFF-A3EE-8AC4E14684DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5F7767A-F3F7-4AFF-A3EE-8AC4E14684DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5F7767A-F3F7-4AFF-A3EE-8AC4E14684DF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

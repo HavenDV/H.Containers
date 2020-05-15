@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netcoreapp3.1;</TargetFrameworks>
+    <LangVersion>8</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <None Remove="TestFiles\H.NET.Core.dll" />
+    <None Remove="TestFiles\H.Notifiers.RssNotifier.zip" />
+    <None Remove="TestFiles\WitAiConverter.zip" />
+    <None Remove="TestFiles\YandexConverter.zip" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <EmbeddedResource Include="TestFiles\H.NET.Core.dll" />
+    <EmbeddedResource Include="TestFiles\H.Notifiers.RssNotifier.zip" />
+    <EmbeddedResource Include="TestFiles\WitAiConverter.zip" />
+    <EmbeddedResource Include="TestFiles\проверка_проверка_8000.wav" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="1.1.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="1.4.0" />
+    <PackageReference Include="MSTest.TestFramework" Version="1.4.0" />
+    <PackageReference Include="coverlet.collector" Version="1.0.1" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\H.Containers.Process\H.Containers.Process.csproj" />
+    <ProjectReference Include="..\H.Modules\H.Modules.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="H.NET.Core">
+      <HintPath>TestFiles\H.NET.Core.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  
+</Project>
