@@ -9,16 +9,15 @@ using H.Containers;
 
 namespace H.Modules
 {
-    public class ModuleManager<T> where T : class
+    public class ModuleManager<TModule> : IDisposable 
+        where TModule : class
     {
         #region Properties
 
         private string Folder { get; }
-        private Func<string, IContainer> ContainerFactoryFunc { get; }
-
 
         private Dictionary<string, IContainer> Containers { get; } = new Dictionary<string, IContainer>();
-        private Dictionary<string, T> Modules { get; } = new Dictionary<string, T>();
+        private Dictionary<string, TModule> Modules { get; } = new Dictionary<string, TModule>();
 
         #endregion
 
@@ -38,19 +37,19 @@ namespace H.Modules
 
         #region Constructors
 
-        public ModuleManager(string folder, Func<string, IContainer> containerFactoryFunc)
+        public ModuleManager(string folder)
         {
             Folder = folder ?? throw new ArgumentNullException(nameof(folder));
-            ContainerFactoryFunc = containerFactoryFunc ?? throw new ArgumentNullException(nameof(containerFactoryFunc));
         }
 
         #endregion
 
         #region Methods
 
-        private IContainer CreateContainer(string name)
+        private static IContainer CreateContainer<TContainer>(string name)
+            where TContainer : IContainer
         {
-            return ContainerFactoryFunc(name);
+            return (TContainer)Activator.CreateInstance(typeof(TContainer), name);
         }
 
         public void TestInitialize()
@@ -65,14 +64,15 @@ namespace H.Modules
             }
         }
 
-        public async Task AddModuleAsync(
+        public async Task<TModule> AddModuleAsync<TContainer>(
             string name,
             string typeName, 
             byte[] bytes, 
             CancellationToken cancellationToken = default)
+            where TContainer : IContainer
         {
-            var container = CreateContainer(name);
-            T? instance = null;
+            var container = CreateContainer<TContainer>(name);
+            TModule? instance = null;
             try
             {
                 //container.MethodsCancellationToken = cancellationTokenSource.Token,
@@ -84,6 +84,7 @@ namespace H.Modules
                 await container.InitializeAsync(cancellationToken);
                 await container.StartAsync(cancellationToken);
 
+                Directory.Delete(Folder, true);
                 Directory.CreateDirectory(Folder);
                 var path = Path.Combine(Folder, $"{name}.zip");
                 File.WriteAllBytes(path, bytes);
@@ -92,7 +93,7 @@ namespace H.Modules
 
                 await container.LoadAssemblyAsync(Path.Combine(Folder, $"{name}.dll"), cancellationToken);
 
-                instance = await container.CreateObjectAsync<T>(typeName, cancellationToken);
+                instance = await container.CreateObjectAsync<TModule>(typeName, cancellationToken);
 
                 Containers.Add(name, container);
                 Modules.Add(name, instance);
@@ -110,6 +111,9 @@ namespace H.Modules
                 }
                 throw;
             }
+
+            return instance ??
+                   throw new InvalidOperationException("Instance is null");
         }
 
         public async Task<IDictionary<string, IList<string>>> GetTypesAsync(
@@ -122,6 +126,28 @@ namespace H.Modules
             return values.ToDictionary(
                 pair => pair.Key, 
                 pair => pair.Item2);
+        }
+
+        public void Dispose()
+        {
+            foreach (var pair in Modules)
+            {
+                if (pair.Value is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+                if (pair.Value is IAsyncDisposable asyncDisposable)
+                {
+                    asyncDisposable.DisposeAsync().AsTask().Wait();
+                }
+            }
+            Modules.Clear();
+
+            foreach (var pair in Containers)
+            {
+                pair.Value.Dispose();
+            }
+            Containers.Clear();
         }
 
         #endregion
