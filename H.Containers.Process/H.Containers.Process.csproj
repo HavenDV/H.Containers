@@ -32,7 +32,7 @@
   </Target>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <Version>0.3.9</Version>
+    <Version>0.3.10</Version>
     <Description>Features:
 - You can run any object in another process in several lines
 - The created object looks like a real one (see ProxyFactory)

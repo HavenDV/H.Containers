@@ -28,7 +28,6 @@ namespace H.Containers.Tests
         }
 
         [TestMethod]
-        [Ignore]
         public async Task RssNotifier()
         {
             await BaseModuleTest<INotifier>(

@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="H.Pipes" Version="1.12.3" />
+    <PackageReference Include="H.Pipes" Version="1.13.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <Version>0.6.9</Version>
+    <Version>0.6.9.1</Version>
     <Description>Features:
 - Create proxy objects that look exactly like the original objects
 - Proxy target can be located anywhere where there is access to pipes
