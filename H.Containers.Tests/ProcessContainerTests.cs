@@ -67,6 +67,7 @@ namespace H.Containers.Tests
         }
 
         [TestMethod]
+        [Ignore]
         public async Task RealTest()
         {
             var receivedException = (Exception?)null;
