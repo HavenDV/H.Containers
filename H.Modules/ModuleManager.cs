@@ -9,6 +9,10 @@ using H.Containers;
 
 namespace H.Modules
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="TModule"></typeparam>
     public class ModuleManager<TModule> : IDisposable 
         where TModule : class
     {
@@ -37,6 +41,10 @@ namespace H.Modules
 
         #region Constructors
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="folder"></param>
         public ModuleManager(string folder)
         {
             Folder = folder ?? throw new ArgumentNullException(nameof(folder));
@@ -52,6 +60,9 @@ namespace H.Modules
             return (TContainer)Activator.CreateInstance(typeof(TContainer), name);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void TestInitialize()
         {
             try
@@ -64,6 +75,16 @@ namespace H.Modules
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="TContainer"></typeparam>
+        /// <param name="name"></param>
+        /// <param name="typeName"></param>
+        /// <param name="bytes"></param>
+        /// <param name="initializeAction"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<TModule> AddModuleAsync<TContainer>(
             string name,
             string typeName, 
@@ -122,6 +143,11 @@ namespace H.Modules
                    throw new InvalidOperationException("Instance is null");
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<IDictionary<string, IList<string>>> GetTypesAsync(
             CancellationToken cancellationToken = default)
         {
@@ -134,6 +160,9 @@ namespace H.Modules
                 pair => pair.Item2);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void Dispose()
         {
             foreach (var pair in Modules)
