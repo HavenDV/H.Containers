@@ -102,9 +102,7 @@ namespace H.Utilities.Tests
             {
                 if (Dictionary.TryGetValue(name, out var value))
                 {
-#nullable disable
-                    return value != null ? (T)value : default;
-#nullable enable
+                    return value != null ? (T)value : default!;
                 }
 
                 await Task.Delay(TimeSpan.FromMilliseconds(1), cancellationToken);
