@@ -28,6 +28,11 @@ namespace H.Containers
         /// </summary>
         public bool ForceUpdateApplication { get; set; }
 
+        /// <summary>
+        /// For debug purposes
+        /// </summary>
+        public bool LaunchInCurrentProcess { get; set; }
+
         private System.Diagnostics.Process? Process { get; set; }
         private PipeProxyFactory ProxyFactory { get; } = new PipeProxyFactory();
 
@@ -90,10 +95,18 @@ namespace H.Containers
         /// <returns></returns>
         public async Task StartAsync(CancellationToken cancellationToken = default)
         {
-            var path = Application.GetPathAndUnpackIfRequired();
             var name = $"{Name}_Pipe";
 
-            Process = System.Diagnostics.Process.Start(path, name);
+            if (LaunchInCurrentProcess)
+            {
+                var _ = ChildProgram.Main(new[] {name}, false);
+            }
+            else
+            {
+                var path = Application.GetPathAndUnpackIfRequired();
+
+                Process = System.Diagnostics.Process.Start(path, name);
+            }
 
             await ProxyFactory.InitializeAsync(name, cancellationToken);
         }
@@ -169,6 +182,13 @@ namespace H.Containers
         /// <returns></returns>
         public async Task StopAsync(TimeSpan? timeout = default, CancellationToken cancellationToken = default)
         {
+            timeout ??= TimeSpan.FromSeconds(1);
+            if (LaunchInCurrentProcess)
+            {
+                await ProxyFactory.SendMessageAsync("stop", cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
             if (Process == null)
             {
                 return;
@@ -176,8 +196,6 @@ namespace H.Containers
             
             try
             {
-                timeout ??= TimeSpan.FromSeconds(1);
-
                 if (!Process.HasExited)
                 {
                     await ProxyFactory.SendMessageAsync("stop", cancellationToken).ConfigureAwait(false);

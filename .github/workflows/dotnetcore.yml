@@ -41,6 +41,11 @@ jobs:
     - name: Run tests
       run: dotnet test --configuration Release --nologo
       
+    - name: Try Publish(if the version has changed) H.Modules
+      if: runner.os == 'Windows' &&
+          matrix.dotnet == '3.1.100'
+      run: dotnet nuget push H.Modules\bin\Release\H.Modules.*.nupkg -k ${{ secrets.NUGET_KEY }} -s https://api.nuget.org/v3/index.json; exit 0
+      
     - name: Try Publish(if the version has changed) H.Containers
       if: runner.os == 'Windows' &&
           matrix.dotnet == '3.1.100'

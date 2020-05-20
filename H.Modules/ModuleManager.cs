@@ -46,7 +46,7 @@ namespace H.Modules
 
         #region Methods
 
-        private static IContainer CreateContainer<TContainer>(string name)
+        private static TContainer CreateContainer<TContainer>(string name)
             where TContainer : IContainer
         {
             return (TContainer)Activator.CreateInstance(typeof(TContainer), name);
@@ -67,7 +67,8 @@ namespace H.Modules
         public async Task<TModule> AddModuleAsync<TContainer>(
             string name,
             string typeName, 
-            byte[] bytes, 
+            byte[] bytes,
+            Action<TContainer>? initializeAction = null,
             CancellationToken cancellationToken = default)
             where TContainer : IContainer
         {
@@ -75,6 +76,8 @@ namespace H.Modules
             TModule? instance = null;
             try
             {
+                initializeAction?.Invoke(container);
+
                 //container.MethodsCancellationToken = cancellationTokenSource.Token,
                 container.ExceptionOccurred += (sender, exception) =>
                 {
@@ -83,7 +86,7 @@ namespace H.Modules
 
                 await container.InitializeAsync(cancellationToken);
                 await container.StartAsync(cancellationToken);
-
+                
                 Directory.Delete(Folder, true);
                 Directory.CreateDirectory(Folder);
                 var path = Path.Combine(Folder, $"{name}.zip");

@@ -36,7 +36,7 @@ namespace H.Modules.Tests
                 "RssNotifier",
                 async (instance, token) =>
                 {
-                    //instance.SetSetting("IntervalInMilliseconds", "1000");
+                    instance.SetSetting("IntervalInMilliseconds", "1000");
                     instance.SetSetting("Url", "https://www.upwork.com/ab/feed/topics/rss?securityToken=3046355554bbd7e304e77a4f04ec54ff90dcfe94eb4bb6ce88c120b2a660a42c47a42de8cfd7db2f3f4962ccb8c9a8d1bb2bff326e55b5b464816c9919c4e66c&userUid=749097038387695616&orgUid=749446993539981313");
                     
                     await Task.Delay(TimeSpan.FromSeconds(5), token);
@@ -68,7 +68,12 @@ namespace H.Modules.Tests
 
             var bytes = ResourcesUtilities.ReadFileAsBytes($"{name}.zip");
 
-            using var instance = await manager.AddModuleAsync<ProcessContainer>(name, typeName, bytes, cancellationTokenSource.Token);
+            using var instance = await manager.AddModuleAsync<ProcessContainer>(
+                name, 
+                typeName, 
+                bytes, 
+                container => container.LaunchInCurrentProcess = true,
+                cancellationTokenSource.Token);
 
             Assert.IsNotNull(instance);
 
