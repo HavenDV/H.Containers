@@ -86,8 +86,11 @@ namespace H.Modules
 
                 await container.InitializeAsync(cancellationToken);
                 await container.StartAsync(cancellationToken);
-                
-                Directory.Delete(Folder, true);
+
+                if (Directory.Exists(Folder))
+                {
+                    Directory.Delete(Folder, true);
+                }
                 Directory.CreateDirectory(Folder);
                 var path = Path.Combine(Folder, $"{name}.zip");
                 File.WriteAllBytes(path, bytes);
