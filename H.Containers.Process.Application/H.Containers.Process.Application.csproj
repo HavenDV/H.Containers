@@ -6,7 +6,15 @@
     <LangVersion>8</LangVersion>
     <Nullable>enable</Nullable>
     <RootNamespace>H.Containers</RootNamespace>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <ProjectReference Include="..\H.Containers.Process.Core\H.Containers.Process.Core.csproj" />
