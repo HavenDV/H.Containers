@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using H.Containers.Tests.Utilities;
-using H.NET.Core;
+using H.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace H.Containers.Tests

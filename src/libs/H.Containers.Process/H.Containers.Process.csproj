@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <RootNamespace>H.Containers</RootNamespace>
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <Version>0.3.12</Version>
+    <Description>
+      Features:
+      - You can run any object in another process in several lines
+      - The created object looks like a real one (see ProxyFactory)
+      - Full control - you can kill the process at any time and interrupt the execution of any code and free the libraries used
+
+      Limitations:
+      - Currently installed .Net 5.0 is required to start the process
+    </Description>
+    <PackageTags>run code in separate process, process, containers, proxy objects, direct proxy</PackageTags>
+    <PackageReleaseNotes>Added GetTypes implementantion</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\H.Containers.Process.Core\H.Containers.Process.Core.csproj" />
+    <ProjectReference Include="..\H.Containers\H.Containers.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="$(OutDir)Application\*.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(OutDir)Application\*.*" />
+  </ItemGroup>
+
+  <Target Name="CopyApplication" BeforeTargets="PreBuildEvent">
+    <RemoveDir Directories="$(OutDir)Application" />
+    <MSBuild Projects="$(SolutionDir)\src\libs\H.Containers.Process.Application\H.Containers.Process.Application.csproj" Targets="CreateReleaseZip" Properties="TargetFramework=net5.0" />
+    <ItemGroup>
+      <ApplicationFiles Include="..\H.Containers.Process.Application\bin\*.zip" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ApplicationFiles)" DestinationFolder="$(OutDir)Application" />
+  </Target>
+
+</Project>
