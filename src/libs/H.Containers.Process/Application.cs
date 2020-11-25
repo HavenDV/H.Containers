@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -13,6 +14,7 @@ namespace H.Containers
     {
         private static string AppDataPath => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.Create);
         private static string ApplicationPath => Directory.CreateDirectory(Path.Combine(AppDataPath, "H.Containers.Process.Application", "1.0.0")).FullName;
+        private static IEnumerable<string> Files => Directory.EnumerateFiles(ApplicationPath, "*.*", SearchOption.AllDirectories);
 
         /// <summary>
         /// 
@@ -20,7 +22,7 @@ namespace H.Containers
         /// <returns></returns>
         public static string GetPathAndUnpackIfRequired()
         {
-            if (!Directory.EnumerateFiles(ApplicationPath).Any())
+            if (!Files.Any())
             {
                 Unpack();
             }
@@ -33,7 +35,7 @@ namespace H.Containers
         /// </summary>
         public static void Clear()
         {
-            foreach (var path in Directory.EnumerateFiles(ApplicationPath))
+            foreach (var path in Files)
             {
                 File.Delete(path);
             }
