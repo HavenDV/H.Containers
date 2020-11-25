@@ -11,7 +11,6 @@
   <ItemGroup>
     <ProjectReference Include="..\H.Containers.Process.Core\H.Containers.Process.Core.csproj" />
     <ProjectReference Include="..\H.Containers\H.Containers.csproj" />
-    <ProjectReference Include="..\H.Utilities.PipeProxyFactory\H.Utilities.PipeProxyFactory.csproj" />
   </ItemGroup>
 
   <ItemGroup>

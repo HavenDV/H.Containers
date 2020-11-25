@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <LangVersion>8</LangVersion>
     <Nullable>enable</Nullable>
     <RootNamespace>H.Containers</RootNamespace>
@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\H.Containers.Process.Core\H.Containers.Process.Core.csproj" />
-    <ProjectReference Include="..\H.Utilities.PipeProxyFactory\H.Utilities.PipeProxyFactory.csproj" />
   </ItemGroup>
 
   <ItemGroup>
