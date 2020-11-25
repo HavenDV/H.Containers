@@ -11,7 +11,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace H.Containers.Tests
 {
     [TestClass]
-    [Ignore]
     public class ProcessContainerTests
     {
         [TestInitialize]
@@ -68,6 +67,7 @@ namespace H.Containers.Tests
         }
 
         [TestMethod]
+        [Ignore("WitAiConverter.zip contains old version")]
         public async Task RealTest()
         {
             var receivedException = (Exception?)null;
@@ -76,7 +76,7 @@ namespace H.Containers.Tests
             {
                 MethodsCancellationToken = cancellationTokenSource.Token,
             };
-            container.ExceptionOccurred += (sender, exception) =>
+            container.ExceptionOccurred += (_, exception) =>
             {
                 Console.WriteLine($"ExceptionOccurred: {exception}");
                 receivedException = exception;
@@ -113,7 +113,7 @@ namespace H.Containers.Tests
                 new[] { "Token" }, 
                 availableSettings);
 
-            instance.SetSetting("Token", "KATWBG4RQCFNBLQTY6QQUKB2SH6EIELG");
+            instance.SetSetting("Token", "XZS4M3BUYV5LBMEWJKAGJ6HCPWZ5IDGY");
 
             await BaseConvertersTests.ConvertTest(instance, "проверка_проверка_8000.wav", "проверка", cancellationTokenSource.Token);
 
