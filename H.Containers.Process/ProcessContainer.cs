@@ -219,7 +219,7 @@ namespace H.Containers
                 Process?.Dispose();
                 Process = null;
 
-                ProxyFactory?.Dispose();
+                await ProxyFactory.DisposeAsync();
             }
         }
 

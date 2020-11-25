@@ -49,7 +49,7 @@ namespace H.Containers
             }
             finally
             {
-                ProxyServer.Dispose();
+                await ProxyServer.DisposeAsync();
                 CancellationTokenSource.Dispose();
             }
         }
