@@ -10,8 +10,8 @@ namespace H.Containers
 {
     public static class ChildProgram
     {
-        private static CancellationTokenSource CancellationTokenSource { get; } = new CancellationTokenSource();
-        private static PipeProxyServer ProxyServer { get; } = new PipeProxyServer();
+        private static CancellationTokenSource CancellationTokenSource { get; } = new ();
+        private static PipeProxyServer ProxyServer { get; } = new ();
 
         public static async Task Main(string[] arguments, bool isSecondProcess)
         {
@@ -27,11 +27,11 @@ namespace H.Containers
 
                 var name = arguments.ElementAt(0);
 
-                ProxyServer.MessageReceived += async (sender, message) =>
+                ProxyServer.MessageReceived += async (_, message) =>
                 {
                     await OnMessageReceivedAsync(message);
                 };
-                ProxyServer.ExceptionOccurred += (sender, exception) =>
+                ProxyServer.ExceptionOccurred += (_, exception) =>
                 {
                     Console.Error.WriteLine($"Server Exception: {exception}");
                 };
