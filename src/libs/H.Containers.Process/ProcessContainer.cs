@@ -34,7 +34,7 @@ namespace H.Containers
         public bool LaunchInCurrentProcess { get; set; }
 
         private System.Diagnostics.Process? Process { get; set; }
-        private PipeProxyFactory ProxyFactory { get; } = new PipeProxyFactory();
+        private PipeProxyFactory ProxyFactory { get; } = new ();
 
         #endregion
 
@@ -63,8 +63,8 @@ namespace H.Containers
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Name = (string.IsNullOrWhiteSpace(name) ? null : "") ?? throw new ArgumentException("Name is empty", nameof(name));
 
-            ProxyFactory.ExceptionOccurred += (sender, exception) => OnExceptionOccurred(exception);
-            ProxyFactory.MethodCalled += (sender, args) => args.CancellationToken = MethodsCancellationToken;
+            ProxyFactory.ExceptionOccurred += (_, exception) => OnExceptionOccurred(exception);
+            ProxyFactory.MethodCalled += (_, args) => args.CancellationToken = MethodsCancellationToken;
         }
 
         #endregion
