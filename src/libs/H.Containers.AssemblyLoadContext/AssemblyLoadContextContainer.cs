@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace H.Containers
 {
-    public class AssemblyLoadContextContainer : IContainer
+    public class AssemblyLoadContextContainer : IContainer, IAsyncDisposable
     {
         #region Properties
 
@@ -83,12 +83,12 @@ namespace H.Containers
         {
             AssemblyLoadContext = AssemblyLoadContext ?? throw new InvalidOperationException("Container is not started.");
 
-            var containerReference = new WeakReference(AssemblyLoadContext, true);
+            var reference = new WeakReference(AssemblyLoadContext, true);
 
             AssemblyLoadContext.Unload();
             AssemblyLoadContext = null;
 
-            for (var i = 0; containerReference.IsAlive && (i < 10); i++)
+            for (var i = 0; reference.IsAlive && i < 10; i++)
             {
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
@@ -121,6 +121,16 @@ namespace H.Containers
             }
 
             StopAsync().Wait();
+        }
+        
+        public async ValueTask DisposeAsync()
+        {
+            if (AssemblyLoadContext == null)
+            {
+                return;
+            }
+
+            await StopAsync();
         }
 
         #endregion

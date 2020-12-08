@@ -10,11 +10,12 @@ namespace H.Containers.Tests
         [TestMethod]
         public async Task LoadTest() => await BaseTests.AsyncTest(TimeSpan.FromMinutes(1), async cancellationToken =>
         {
+            using var tempDirectory = new TempDirectory();
             using var container = new AppDomainContainer("Modules");
 
             await Assert.ThrowsExceptionAsync<PlatformNotSupportedException>(async () =>
             {
-                await BaseTests.LoadTestAsync(container, true, cancellationToken);
+                await BaseTests.LoadTestAsync(container, tempDirectory, cancellationToken);
             });
         });
     }

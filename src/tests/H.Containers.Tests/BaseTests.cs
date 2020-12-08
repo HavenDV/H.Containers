@@ -28,12 +28,8 @@ namespace H.Containers.Tests
             return Path.Combine(directory.Folder, $"{name}.dll");
         }
         
-        public static async Task LoadTestAsync(IContainer container, bool deleteDirectory = true, CancellationToken cancellationToken = default)
+        public static async Task LoadTestAsync(IContainer container, TempDirectory tempDirectory, CancellationToken cancellationToken = default)
         {
-            using var tempDirectory = new TempDirectory
-            {
-                DeleteOnDispose = deleteDirectory,
-            };
             var path = tempDirectory.Extract("H.Notifiers.RssNotifier");
 
             await container.StartAsync(cancellationToken);

@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -7,11 +8,12 @@ namespace H.Containers.Tests
     public class AssemblyLoadContextContainerTests
     {
         [TestMethod]
-        public void LoadTest()
+        public async Task LoadTest() => await BaseTests.AsyncTest(TimeSpan.FromMinutes(1), async cancellationToken =>
         {
-            //using var container = new AssemblyLoadContextContainer("Modules");
+            using var tempDirectory = new TempDirectory(false);
+            await using var container = new AssemblyLoadContextContainer("Modules");
 
-            //await BaseTests.LoadTestAsync(container, $"{nameof(AssemblyLoadContextContainerTests)}_{nameof(LoadTest)}");
-        }
+            await BaseTests.LoadTestAsync(container, tempDirectory, cancellationToken);
+        });
     }
 }

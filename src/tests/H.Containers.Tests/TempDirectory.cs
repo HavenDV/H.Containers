@@ -8,14 +8,16 @@ namespace H.Containers.Tests
         #region Properties
 
         public string Folder { get; }
-        public bool DeleteOnDispose { get; init; } = true;
+        public bool DeleteOnDispose { get; }
 
         #endregion
 
         #region Constructors
 
-        public TempDirectory()
+        public TempDirectory(bool deleteOnDispose = true)
         {
+            DeleteOnDispose = deleteOnDispose;
+            
             var random = new Random();
             Folder = Path.Combine(Path.GetTempPath(), "H.Temp", $"{random.Next()}");
             

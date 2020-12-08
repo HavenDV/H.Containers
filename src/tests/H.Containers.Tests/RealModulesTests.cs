@@ -54,7 +54,7 @@ namespace H.Containers.Tests
             where T : class, IModule
         {
             var receivedException = (Exception?)null;
-            using var tempDirectory = new TempDirectory();
+            using var tempDirectory = new TempDirectory(false);
             using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(15));
             await using var container = new ProcessContainer(nameof(ProcessContainerTests))
             {
