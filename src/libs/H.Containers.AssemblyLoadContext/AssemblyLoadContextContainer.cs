@@ -9,20 +9,40 @@ using System.Threading.Tasks;
 
 namespace H.Containers
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class AssemblyLoadContextContainer : IContainer, IAsyncDisposable
     {
         #region Properties
 
+        /// <summary>
+        /// 
+        /// </summary>
         public string Name { get; }
+        
+        /// <summary>
+        /// 
+        /// </summary>
         public string Directory { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// 
+        /// </summary>
         public Assembly? MainAssembly { get; set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public AssemblyLoadContext? AssemblyLoadContext { get; set; }
 
         #endregion
 
         #region Events
 
+        /// <summary>
+        /// 
+        /// </summary>
         public event EventHandler<Exception>? ExceptionOccurred;
 
         private void OnExceptionOccurred(Exception exception)
@@ -34,6 +54,10 @@ namespace H.Containers
 
         #region Constructors
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="name"></param>
         public AssemblyLoadContextContainer(string name)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -44,11 +68,21 @@ namespace H.Containers
 
         #region Public methods
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public Task InitializeAsync(CancellationToken cancellationToken = default)
         {
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public Task StartAsync(CancellationToken cancellationToken = default)
         {
             AssemblyLoadContext = new AssemblyLoadContext(Name, true);
@@ -57,6 +91,12 @@ namespace H.Containers
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public Task LoadAssemblyAsync(string path, CancellationToken cancellationToken = default)
         {
             AssemblyLoadContext = AssemblyLoadContext ?? throw new InvalidOperationException("Container is not started.");
@@ -67,6 +107,11 @@ namespace H.Containers
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public Task<IList<string>> GetTypesAsync(CancellationToken cancellationToken = default)
         {
             AssemblyLoadContext = AssemblyLoadContext ?? throw new InvalidOperationException("Container is not started.");
@@ -79,6 +124,12 @@ namespace H.Containers
             return Task.FromResult<IList<string>>(types);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="timeout"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public Task StopAsync(TimeSpan? timeout = default, CancellationToken cancellationToken = default)
         {
             AssemblyLoadContext = AssemblyLoadContext ?? throw new InvalidOperationException("Container is not started.");
@@ -97,6 +148,13 @@ namespace H.Containers
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="typeName"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public Task<T> CreateObjectAsync<T>(string typeName, CancellationToken cancellationToken = default)
             where T : class
         {
@@ -113,6 +171,9 @@ namespace H.Containers
 
         #region IDisposable
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void Dispose()
         {
             if (AssemblyLoadContext == null)
@@ -123,6 +184,10 @@ namespace H.Containers
             StopAsync().Wait();
         }
         
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public async ValueTask DisposeAsync()
         {
             if (AssemblyLoadContext == null)
