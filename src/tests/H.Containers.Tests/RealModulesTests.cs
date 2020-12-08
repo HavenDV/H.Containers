@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using H.Containers.Tests.Utilities;
 using H.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -57,12 +54,13 @@ namespace H.Containers.Tests
             where T : class, IModule
         {
             var receivedException = (Exception?)null;
+            using var tempDirectory = new TempDirectory();
             using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(15));
             await using var container = new ProcessContainer(nameof(ProcessContainerTests))
             {
                 MethodsCancellationToken = cancellationTokenSource.Token,
             };
-            container.ExceptionOccurred += (sender, exception) =>
+            container.ExceptionOccurred += (_, exception) =>
             {
                 Console.WriteLine($"ExceptionOccurred: {exception}");
                 receivedException = exception;
@@ -74,15 +72,9 @@ namespace H.Containers.Tests
             await container.InitializeAsync(cancellationTokenSource.Token);
             await container.StartAsync(cancellationTokenSource.Token);
 
-            var directory = Path.Combine(Path.GetTempPath(), $"H.Containers.Tests_{name}");
-            Directory.CreateDirectory(directory);
-            var path = Path.Combine(directory, $"{name}.zip");
-            var bytes = ResourcesUtilities.ReadFileAsBytes($"{name}.zip");
-            File.WriteAllBytes(path, bytes);
-
-            ZipFile.ExtractToDirectory(path, directory, true);
-
-            await container.LoadAssemblyAsync(Path.Combine(directory, $"{name}.dll"), cancellationTokenSource.Token);
+            var path = tempDirectory.Extract(name);
+            
+            await container.LoadAssemblyAsync(path, cancellationTokenSource.Token);
             
             var types = await container.GetTypesAsync(cancellationTokenSource.Token);
             ShowList(types, "Available types");

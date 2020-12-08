@@ -5,14 +5,12 @@
   </PropertyGroup>
   
   <ItemGroup Label="Test Files">
-    <None Remove="TestFiles\H.Core.dll" />
-    <None Remove="TestFiles\H.Notifiers.RssNotifier.zip" />
-    <None Remove="TestFiles\WitAiConverter.zip" />
-    <None Remove="TestFiles\YandexConverter.zip" />
-    <EmbeddedResource Include="TestFiles\H.Core.dll" />
-    <EmbeddedResource Include="TestFiles\H.Notifiers.RssNotifier.zip" />
-    <EmbeddedResource Include="TestFiles\WitAiConverter.zip" />
-    <EmbeddedResource Include="TestFiles\проверка_проверка_8000.wav" />
+    <None Remove="TestFiles\*" />
+    <EmbeddedResource Include="TestFiles\*" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="H.Core" Version="0.9.3" />
   </ItemGroup>
   
   <ItemGroup>
@@ -20,12 +18,6 @@
     <ProjectReference Include="..\..\libs\H.Containers.AssemblyLoadContext\H.Containers.AssemblyLoadContext.csproj" />
     <ProjectReference Include="..\..\libs\H.Containers.CurrentDomain\H.Containers.CurrentDomain.csproj" />
     <ProjectReference Include="..\..\libs\H.Containers.Process\H.Containers.Process.csproj" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <Reference Include="H.Core">
-      <HintPath>TestFiles\H.Core.dll</HintPath>
-    </Reference>
   </ItemGroup>
   
 </Project>

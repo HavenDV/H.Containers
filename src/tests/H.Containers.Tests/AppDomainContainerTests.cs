@@ -8,14 +8,14 @@ namespace H.Containers.Tests
     public class AppDomainContainerTests
     {
         [TestMethod]
-        public async Task LoadTest()
+        public async Task LoadTest() => await BaseTests.AsyncTest(TimeSpan.FromMinutes(1), async cancellationToken =>
         {
             using var container = new AppDomainContainer("Modules");
 
             await Assert.ThrowsExceptionAsync<PlatformNotSupportedException>(async () =>
             {
-                await BaseTests.LoadTestAsync(container, $"{nameof(AppDomainContainerTests)}_{nameof(LoadTest)}");
+                await BaseTests.LoadTestAsync(container, true, cancellationToken);
             });
-        }
+        });
     }
 }
