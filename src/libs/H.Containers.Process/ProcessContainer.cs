@@ -61,7 +61,7 @@ namespace H.Containers
         public ProcessContainer(string name)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
-            Name = (string.IsNullOrWhiteSpace(name) ? null : "") ?? throw new ArgumentException("Name is empty", nameof(name));
+            Name = (string.IsNullOrWhiteSpace(name) ? null : name) ?? throw new ArgumentException("Name is empty", nameof(name));
 
             ProxyFactory.ExceptionOccurred += (_, exception) => OnExceptionOccurred(exception);
             ProxyFactory.MethodCalled += (_, args) => args.CancellationToken = MethodsCancellationToken;
