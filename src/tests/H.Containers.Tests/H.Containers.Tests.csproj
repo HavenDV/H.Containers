@@ -5,24 +5,27 @@
   </PropertyGroup>
   
   <ItemGroup Label="Test Files">
-    <None Remove="TestFiles\H.NET.Core.dll" />
+    <None Remove="TestFiles\H.Core.dll" />
     <None Remove="TestFiles\H.Notifiers.RssNotifier.zip" />
     <None Remove="TestFiles\WitAiConverter.zip" />
     <None Remove="TestFiles\YandexConverter.zip" />
-    <EmbeddedResource Include="TestFiles\H.NET.Core.dll" />
+    <EmbeddedResource Include="TestFiles\H.Core.dll" />
     <EmbeddedResource Include="TestFiles\H.Notifiers.RssNotifier.zip" />
     <EmbeddedResource Include="TestFiles\WitAiConverter.zip" />
     <EmbeddedResource Include="TestFiles\проверка_проверка_8000.wav" />
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="H.Core" Version="0.9.1" />
+    <ProjectReference Include="..\..\libs\H.Containers.AppDomain\H.Containers.AppDomain.csproj" />
+    <ProjectReference Include="..\..\libs\H.Containers.AssemblyLoadContext\H.Containers.AssemblyLoadContext.csproj" />
+    <ProjectReference Include="..\..\libs\H.Containers.CurrentDomain\H.Containers.CurrentDomain.csproj" />
+    <ProjectReference Include="..\..\libs\H.Containers.Process\H.Containers.Process.csproj" />
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\..\libs\H.Containers.AppDomain\H.Containers.AppDomain.csproj" />
-    <ProjectReference Include="..\..\libs\H.Containers.CurrentDomain\H.Containers.CurrentDomain.csproj" />
-    <ProjectReference Include="..\..\libs\H.Containers.Process\H.Containers.Process.csproj" />
+    <Reference Include="H.Core">
+      <HintPath>TestFiles\H.Core.dll</HintPath>
+    </Reference>
   </ItemGroup>
   
 </Project>

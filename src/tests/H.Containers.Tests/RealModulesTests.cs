@@ -34,15 +34,18 @@ namespace H.Containers.Tests
                 "H.Notifiers.RssNotifier", 
                 "H.Notifiers.RssNotifier",
                 "RssNotifier",
-                async (instance, token) =>
+                async (instance, cancellationToken) =>
                 {
-                    //instance.SetSetting("IntervalInMilliseconds", "1000");
-                    //instance.SetSetting("Url", "https://www.upwork.com/ab/feed/topics/rss?securityToken=3046355554bbd7e304e77a4f04ec54ff90dcfe94eb4bb6ce88c120b2a660a42c47a42de8cfd7db2f3f4962ccb8c9a8d1bb2bff326e55b5b464816c9919c4e66c&userUid=749097038387695616&orgUid=749446993539981313");
+                    instance.SetSetting("IntervalInMilliseconds", "1000");
+                    instance.SetSetting("Url", "https://www.upwork.com/ab/feed/topics/rss?securityToken=3046355554bbd7e304e77a4f04ec54ff90dcfe94eb4bb6ce88c120b2a660a42c47a42de8cfd7db2f3f4962ccb8c9a8d1bb2bff326e55b5b464816c9919c4e66c&userUid=749097038387695616&orgUid=749446993539981313");
                     
-                    await Task.Delay(TimeSpan.FromSeconds(5), token);
+                    await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
 
-                    //var value = instance.GetModuleVariableValue("$rss_last_title$");
-                    //Console.WriteLine($"Rss Last Title: {value}");
+                    var value = instance.GetModuleVariableValue("$rss_last_title$");
+                    Console.WriteLine($"Rss Last Title: {value}");
+                    
+                    Assert.IsNotNull(value, nameof(value));
+                    Assert.AreNotEqual(string.Empty, value, nameof(value));
                 });
         }
 
@@ -86,7 +89,20 @@ namespace H.Containers.Tests
 
             using var instance = await container.CreateObjectAsync<T>(typeName, cancellationTokenSource.Token);
             Assert.IsNotNull(instance);
-
+            
+            instance.NewCommand += (_, command) =>
+            {
+                Console.WriteLine($"{nameof(instance.NewCommand)}: {command}");
+            };
+            instance.ExceptionOccurred += (_, exception) =>
+            {
+                Console.WriteLine($"{nameof(instance.ExceptionOccurred)}: {exception}");
+            };
+            instance.LogReceived += (_, log) =>
+            {
+                Console.WriteLine($"{nameof(instance.LogReceived)}: {log}");
+            };
+            
             Assert.AreEqual(shortName, instance.ShortName);
 
             var availableSettings = instance.GetAvailableSettings().ToArray();
