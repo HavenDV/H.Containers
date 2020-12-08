@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <Version>0.4.1</Version>
+    <Version>0.4.2</Version>
     <Description>
       Features:
       - You can run any object in another process in several lines
@@ -18,7 +18,7 @@
       - Currently installed .Net 5.0 is required to start the process
     </Description>
     <PackageTags>run code in separate process, process, containers, proxy objects, direct proxy</PackageTags>
-    <PackageReleaseNotes>Added GetTypes implementantion</PackageReleaseNotes>
+    <PackageReleaseNotes>To H.ProxyFactory.Pipes 0.7.2.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
