@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Loader;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +14,8 @@ namespace H.Containers
         #region Properties
 
         public string Name { get; }
+        public string Directory { get; set; } = string.Empty;
+        public Assembly? MainAssembly { get; set; }
 
         public AssemblyLoadContext? AssemblyLoadContext { get; set; }
 
@@ -48,26 +52,27 @@ namespace H.Containers
         public Task StartAsync(CancellationToken cancellationToken = default)
         {
             AssemblyLoadContext = new AssemblyLoadContext(Name, true);
-
+            AssemblyLoadContext.Resolving += (_, name) => 
+                AssemblyLoadContext?.LoadFromAssemblyPath(Path.Combine(Directory, $"{name.Name}.dll"));
             return Task.CompletedTask;
         }
 
         public Task LoadAssemblyAsync(string path, CancellationToken cancellationToken = default)
         {
-            AssemblyLoadContext = AssemblyLoadContext ?? throw new InvalidOperationException("Container is not started");
+            AssemblyLoadContext = AssemblyLoadContext ?? throw new InvalidOperationException("Container is not started.");
 
-            AssemblyLoadContext.LoadFromAssemblyPath(path);
+            Directory = Path.GetDirectoryName(path) ?? string.Empty;
+            MainAssembly = AssemblyLoadContext.LoadFromAssemblyPath(path);
 
             return Task.CompletedTask;
         }
 
         public Task<IList<string>> GetTypesAsync(CancellationToken cancellationToken = default)
         {
-            AssemblyLoadContext = AssemblyLoadContext ?? throw new InvalidOperationException("Container is not started");
+            AssemblyLoadContext = AssemblyLoadContext ?? throw new InvalidOperationException("Container is not started.");
+            MainAssembly = MainAssembly ?? throw new InvalidOperationException("Assembly is not loaded.");
 
-            var types = AssemblyLoadContext
-                .Assemblies
-                .SelectMany(assembly => assembly.GetTypes())
+            var types = MainAssembly.GetTypes()
                 .Select(type => type.FullName ?? string.Empty)
                 .ToArray();
 
@@ -76,7 +81,7 @@ namespace H.Containers
 
         public Task StopAsync(TimeSpan? timeout = default, CancellationToken cancellationToken = default)
         {
-            AssemblyLoadContext = AssemblyLoadContext ?? throw new InvalidOperationException("Container is not started");
+            AssemblyLoadContext = AssemblyLoadContext ?? throw new InvalidOperationException("Container is not started.");
 
             var containerReference = new WeakReference(AssemblyLoadContext, true);
 
@@ -95,12 +100,13 @@ namespace H.Containers
         public Task<T> CreateObjectAsync<T>(string typeName, CancellationToken cancellationToken = default)
             where T : class
         {
-            AssemblyLoadContext = AssemblyLoadContext ?? throw new InvalidOperationException("AssemblyLoadContext is not loaded");
+            AssemblyLoadContext = AssemblyLoadContext ?? throw new InvalidOperationException("AssemblyLoadContext is not loaded.");
+            MainAssembly = MainAssembly ?? throw new InvalidOperationException("Assembly is not loaded.");
 
-            var obj = AssemblyLoadContext.Assemblies.First().CreateInstance(typeName) as T
+            var obj = MainAssembly.CreateInstance(typeName, true)
                       ?? throw new InvalidOperationException("Object is null");
-
-            return Task.FromResult(obj);
+            
+            return Task.FromResult((T)obj);
         }
 
         #endregion
@@ -123,7 +129,7 @@ namespace H.Containers
 
         private void EnsureIsStarted()
         {
-            AssemblyLoadContext = AssemblyLoadContext ?? throw new InvalidOperationException("Container is not started");
+            AssemblyLoadContext = AssemblyLoadContext ?? throw new InvalidOperationException("Container is not started.");
         }
 
         #endregion
