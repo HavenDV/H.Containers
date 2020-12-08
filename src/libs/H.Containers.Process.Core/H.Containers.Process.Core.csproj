@@ -6,14 +6,14 @@
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <Version>0.4.2</Version>
+    <Version>0.4.3</Version>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <Description></Description>
-    <PackageReleaseNotes>To H.ProxyFactory.Pipes 0.7.2.</PackageReleaseNotes>
+    <PackageReleaseNotes>To H.ProxyFactory.Pipes 0.7.3.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="H.ProxyFactory.Pipes" Version="0.7.2" />
+    <PackageReference Include="H.ProxyFactory.Pipes" Version="0.7.3" />
   </ItemGroup>
 
 </Project>
