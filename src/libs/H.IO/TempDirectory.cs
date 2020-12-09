@@ -6,7 +6,7 @@ namespace H.IO
     /// <summary>
     /// 
     /// </summary>
-    public class TempDirectory : IDisposable
+    public sealed class TempDirectory : IDisposable
     {
         #region Properties
 

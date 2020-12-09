@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using H.IO;
 using H.Utilities;
 
 namespace H.Containers
@@ -29,7 +30,7 @@ namespace H.Containers
         /// </summary>
         public bool LaunchInCurrentProcess { get; set; }
 
-        private ApplicationDirectory ApplicationDirectory { get; } = new ();
+        private TempDirectory ApplicationDirectory { get; } = new ();
         private string? ApplicationPath { get; set; }
         private Process? Process { get; set; }
         private PipeProxyFactory ProxyFactory { get; } = new ();

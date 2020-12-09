@@ -6,7 +6,7 @@ using H.IO.Utilities;
 
 namespace H.Containers
 {
-    internal class ApplicationDirectory : TempDirectory
+    internal static class TempDirectoryExtensions
     {
         #region Constants
 
@@ -16,25 +16,25 @@ namespace H.Containers
 
         #region Methods
 
-        public string Unpack()
+        public static string Unpack(this TempDirectory tempDirectory)
         {
             var names = ResourcesUtilities.GetResourcesNames().ToList();
             var firstName = names.First();
             var zipBytes = ResourcesUtilities.ReadFileAsBytes(firstName);
 
-            var zipPath = Path.Combine(Folder, firstName);
+            var zipPath = Path.Combine(tempDirectory.Folder, firstName);
             File.WriteAllBytes(zipPath, zipBytes);
 
             try
             {
-                ZipFile.ExtractToDirectory(zipPath, Folder);
+                ZipFile.ExtractToDirectory(zipPath, tempDirectory.Folder);
             }
             finally
             {
                 File.Delete(zipPath);
             }
 
-            return Path.Combine(Folder, ExeName);
+            return Path.Combine(tempDirectory.Folder, ExeName);
         }
 
         #endregion
