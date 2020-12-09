@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <Version>0.4.3</Version>
+    <Version>0.4.4</Version>
     <Description>
       Features:
       - You can run any object in another process in several lines

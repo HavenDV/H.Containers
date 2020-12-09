@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <Version>0.4.3</Version>
+    <Version>0.4.4</Version>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <Description></Description>
     <PackageReleaseNotes>To H.ProxyFactory.Pipes 0.7.3.</PackageReleaseNotes>
