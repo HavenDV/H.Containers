@@ -54,10 +54,24 @@ namespace H.IO
             
             foreach (var path in Directory.EnumerateFiles(Folder, "*.*", SearchOption.AllDirectories))
             {
-                File.Delete(path);
+                try
+                {
+                    File.Delete(path);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // ignored.
+                }
             }
 
-            Directory.Delete(Folder, true);
+            try
+            {
+                Directory.Delete(Folder, true);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // ignored.
+            }
         }
         
         /// <summary>

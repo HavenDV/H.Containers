@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using H.Core;
+using H.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace H.Containers.Tests
@@ -41,7 +42,7 @@ namespace H.Containers.Tests
             where T : class, IModule
         {
             var receivedException = (Exception?)null;
-            using var tempDirectory = new TempDirectory(false);
+            using var tempDirectory = new TempDirectory();
             using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(15));
             await using var container = new ProcessContainer(nameof(ProcessContainerTests))
             {
