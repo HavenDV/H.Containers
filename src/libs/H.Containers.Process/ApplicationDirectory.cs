@@ -1,8 +1,8 @@
 ﻿using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using H.Containers.Utilities;
 using H.IO;
+using H.IO.Utilities;
 
 namespace H.Containers
 {

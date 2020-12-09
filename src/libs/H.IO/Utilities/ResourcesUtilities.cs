@@ -55,6 +55,27 @@ namespace H.IO.Utilities
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="ArgumentException"></exception>
         /// <returns></returns>
+        public static string ReadFileAsString(string name, Assembly? assembly = null)
+        {
+            name = name ?? throw new ArgumentNullException(nameof(name));
+
+            using var stream = ReadFileAsStream(name, assembly);
+            using var reader = new StreamReader(stream);
+
+            return reader.ReadToEnd();
+        }
+
+        /// <summary>
+        /// Searches for a file among Embedded resources <br/>
+        /// Throws an <see cref="ArgumentException"/> if nothing is found or more than one match is found <br/>
+        /// <![CDATA[Version: 1.0.0.2]]> <br/>
+        /// <![CDATA[Dependency: ReadFileAsStream(string name, Assembly? assembly = null)]]> <br/>
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="assembly"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        /// <returns></returns>
         public static byte[] ReadFileAsBytes(string name, Assembly? assembly = null)
         {
             name = name ?? throw new ArgumentNullException(nameof(name));
@@ -68,15 +89,15 @@ namespace H.IO.Utilities
         }
 
         /// <summary>
-        /// 
+        /// Returns the names of all the resources in this assembly.
         /// </summary>
         /// <param name="assembly"></param>
-        /// <returns></returns>
+        /// <returns>An array that contains the names of all the resources.</returns>
         public static string[] GetResourcesNames(Assembly? assembly = null)
         {
             assembly ??= Assembly.GetExecutingAssembly();
 
-            return assembly.GetManifestResourceNames().ToArray();
+            return assembly.GetManifestResourceNames();
         }
     }
 }

@@ -3,8 +3,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
-using H.Containers.Tests.Utilities;
 using H.IO;
+using H.IO.Utilities;
 
 namespace H.Containers.Tests
 {
