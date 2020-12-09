@@ -15,6 +15,8 @@ namespace H.Containers
 
         public static async Task Main(string[] arguments, bool isSecondProcess)
         {
+            arguments = arguments ?? throw new ArgumentNullException(nameof(arguments));
+            
             try
             {
                 var parent = isSecondProcess
@@ -29,19 +31,19 @@ namespace H.Containers
 
                 ProxyServer.MessageReceived += async (_, message) =>
                 {
-                    await OnMessageReceivedAsync(message);
+                    await OnMessageReceivedAsync(message).ConfigureAwait(false);
                 };
                 ProxyServer.ExceptionOccurred += (_, exception) =>
                 {
                     Console.Error.WriteLine($"Server Exception: {exception}");
                 };
 
-                await ProxyServer.InitializeAsync(name, CancellationTokenSource.Token);
+                await ProxyServer.InitializeAsync(name, CancellationTokenSource.Token).ConfigureAwait(false);
 
                 while (!CancellationTokenSource.IsCancellationRequested && 
                        (parent == null || !parent.HasExited))
                 {
-                    await Task.Delay(TimeSpan.FromMilliseconds(1), CancellationTokenSource.Token);
+                    await Task.Delay(TimeSpan.FromMilliseconds(1), CancellationTokenSource.Token).ConfigureAwait(false);
                 }
             }
             catch (OperationCanceledException)
@@ -49,7 +51,7 @@ namespace H.Containers
             }
             finally
             {
-                await ProxyServer.DisposeAsync();
+                await ProxyServer.DisposeAsync().ConfigureAwait(false);
                 CancellationTokenSource.Dispose();
             }
         }
@@ -67,7 +69,7 @@ namespace H.Containers
             }
             catch (Exception exception)
             {
-                await ProxyServer.SendExceptionAsync(exception);
+                await ProxyServer.SendExceptionAsync(exception).ConfigureAwait(false);
             }
         }
     }

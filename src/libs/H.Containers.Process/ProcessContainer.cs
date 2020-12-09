@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using H.Utilities;
@@ -24,16 +25,13 @@ namespace H.Containers
         public CancellationToken MethodsCancellationToken { get; set; } = CancellationToken.None;
 
         /// <summary>
-        /// 
-        /// </summary>
-        public bool ForceUpdateApplication { get; set; }
-
-        /// <summary>
         /// For debug purposes
         /// </summary>
         public bool LaunchInCurrentProcess { get; set; }
 
-        private System.Diagnostics.Process? Process { get; set; }
+        private ApplicationDirectory ApplicationDirectory { get; } = new ();
+        private string? ApplicationPath { get; set; }
+        private Process? Process { get; set; }
         private PipeProxyFactory ProxyFactory { get; } = new ();
 
         #endregion
@@ -78,12 +76,7 @@ namespace H.Containers
         /// <returns></returns>
         public Task InitializeAsync(CancellationToken cancellationToken = default)
         {
-            if (ForceUpdateApplication)
-            {
-                Application.Clear();
-            }
-
-            Application.GetPathAndUnpackIfRequired();
+            ApplicationPath = ApplicationDirectory.Unpack();
 
             return Task.CompletedTask;
         }
@@ -103,12 +96,10 @@ namespace H.Containers
             }
             else
             {
-                var path = Application.GetPathAndUnpackIfRequired();
-
-                Process = System.Diagnostics.Process.Start(path, name);
+                Process = Process.Start(new ProcessStartInfo(ApplicationPath, name));
             }
 
-            await ProxyFactory.InitializeAsync(name, cancellationToken);
+            await ProxyFactory.InitializeAsync(name, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -120,7 +111,7 @@ namespace H.Containers
         /// <returns></returns>
         public async Task LoadAssemblyAsync(string path, CancellationToken cancellationToken = default)
         {
-            await ProxyFactory.LoadAssemblyAsync(path, cancellationToken);
+            await ProxyFactory.LoadAssemblyAsync(path, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -135,7 +126,7 @@ namespace H.Containers
         {
             typeName = typeName ?? throw new ArgumentNullException(nameof(typeName));
 
-            return await ProxyFactory.CreateInstanceAsync<T>(typeName, cancellationToken);
+            return await ProxyFactory.CreateInstanceAsync<T>(typeName, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -153,13 +144,13 @@ namespace H.Containers
             var path = type.Assembly.Location;
             if (!ProxyFactory.LoadedAssemblies.Contains(path))
             {
-                await LoadAssemblyAsync(path, cancellationToken);
+                await LoadAssemblyAsync(path, cancellationToken).ConfigureAwait(false);
             }
 
             return await CreateObjectAsync<T>(
                 type.FullName ?? 
                 throw new InvalidOperationException("type.FullName is null"), 
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -169,7 +160,7 @@ namespace H.Containers
         /// <returns></returns>
         public async Task<IList<string>> GetTypesAsync(CancellationToken cancellationToken = default)
         {
-            return await ProxyFactory.GetTypesAsync(cancellationToken);
+            return await ProxyFactory.GetTypesAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -219,7 +210,9 @@ namespace H.Containers
                 Process?.Dispose();
                 Process = null;
 
-                await ProxyFactory.DisposeAsync();
+                await ProxyFactory.DisposeAsync().ConfigureAwait(false);
+
+                ApplicationDirectory.Dispose();
             }
         }
 
@@ -241,7 +234,7 @@ namespace H.Containers
         /// <returns></returns>
         public async ValueTask DisposeAsync()
         {
-            await StopAsync(cancellationToken: MethodsCancellationToken);
+            await StopAsync(cancellationToken: MethodsCancellationToken).ConfigureAwait(false);
         }
 
         #endregion

@@ -11,7 +11,7 @@ namespace H.Containers.Extensions
     public static class ProcessExtensions
     {
         [StructLayout(LayoutKind.Sequential)]
-        public struct ProcessInformation
+        internal struct ProcessInformation
         {
             // These members must match PROCESS_BASIC_INFORMATION
             internal IntPtr Reserved1;
@@ -31,6 +31,8 @@ namespace H.Containers.Extensions
         /// <returns>An instance of the Process class.</returns>
         public static Process? GetParent(this Process process)
         {
+            process = process ?? throw new ArgumentNullException(nameof(process));
+            
             return GetParentProcess(process.Handle);
         }
 

@@ -13,19 +13,6 @@ namespace H.Containers.Tests
     [TestClass]
     public class ProcessContainerTests
     {
-        [TestInitialize]
-        public void TestInitialize()
-        {
-            try
-            {
-                Application.Clear();
-                Application.GetPathAndUnpackIfRequired();
-            }
-            catch (UnauthorizedAccessException)
-            {
-            }
-        }
-
         [TestMethod]
         public async Task StartTest()
         {

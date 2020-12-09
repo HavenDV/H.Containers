@@ -6,7 +6,7 @@ namespace H.Containers
     {
         private static async Task Main(string[] arguments)
         {
-            await ChildProgram.Main(arguments, true);
+            await ChildProgram.Main(arguments, true).ConfigureAwait(false);
         }
     }
 }
