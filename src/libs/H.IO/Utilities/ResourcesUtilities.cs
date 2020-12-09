@@ -25,7 +25,7 @@ namespace H.IO.Utilities
         public static Stream ReadFileAsStream(string name, Assembly? assembly = null)
         {
             name = name ?? throw new ArgumentNullException(nameof(name));
-            assembly ??= Assembly.GetExecutingAssembly();
+            assembly ??= Assembly.GetCallingAssembly();
 
             try
             {
@@ -58,6 +58,7 @@ namespace H.IO.Utilities
         public static string ReadFileAsString(string name, Assembly? assembly = null)
         {
             name = name ?? throw new ArgumentNullException(nameof(name));
+            assembly ??= Assembly.GetCallingAssembly();
 
             using var stream = ReadFileAsStream(name, assembly);
             using var reader = new StreamReader(stream);
@@ -79,6 +80,7 @@ namespace H.IO.Utilities
         public static byte[] ReadFileAsBytes(string name, Assembly? assembly = null)
         {
             name = name ?? throw new ArgumentNullException(nameof(name));
+            assembly ??= Assembly.GetCallingAssembly();
 
             using var stream = ReadFileAsStream(name, assembly);
             using var memoryStream = new MemoryStream();
@@ -95,7 +97,7 @@ namespace H.IO.Utilities
         /// <returns>An array that contains the names of all the resources.</returns>
         public static string[] GetResourcesNames(Assembly? assembly = null)
         {
-            assembly ??= Assembly.GetExecutingAssembly();
+            assembly ??= Assembly.GetCallingAssembly();
 
             return assembly.GetManifestResourceNames();
         }
