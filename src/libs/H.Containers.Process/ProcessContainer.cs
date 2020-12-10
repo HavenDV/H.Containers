@@ -30,6 +30,11 @@ namespace H.Containers
         /// </summary>
         public bool LaunchInCurrentProcess { get; set; }
 
+        /// <summary>
+        /// Default -> <see cref="ProcessRuntime.Net50"/>
+        /// </summary>
+        public ProcessRuntime ProcessRuntime { get; set; } = ProcessRuntime.Net50;
+
         private TempDirectory ApplicationDirectory { get; } = new ();
         private string? ApplicationPath { get; set; }
         private Process? Process { get; set; }
@@ -77,7 +82,7 @@ namespace H.Containers
         /// <returns></returns>
         public Task InitializeAsync(CancellationToken cancellationToken = default)
         {
-            ApplicationPath = ApplicationDirectory.Unpack();
+            ApplicationPath = ApplicationDirectory.Unpack(ProcessRuntime);
 
             return Task.CompletedTask;
         }

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFrameworks>net4.6.1;net4.8;netcoreapp3.1;net5.0</TargetFrameworks>
     <RootNamespace>H.Containers</RootNamespace>
   </PropertyGroup>
 
@@ -13,15 +13,5 @@
   <ItemGroup>
     <ProjectReference Include="..\H.Containers.Process.Core\H.Containers.Process.Core.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <ZipFiles Include="$(ProjectDir)bin\*.zip" />
-  </ItemGroup>
-
-  <Target Name="CreateReleaseZip" AfterTargets="AfterBuild">
-    <Delete Files="@(ZipFiles)" />
-    <ZipDirectory SourceDirectory="$(OutDir)" DestinationFile="$(ProjectDir)bin\$(TargetFramework)_$(ConfigurationName).zip" Overwrite="True" />
-    <Message Importance="High" Text="Release zip is created" />
-  </Target>
 
 </Project>

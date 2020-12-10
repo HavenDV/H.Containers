@@ -6,10 +6,10 @@
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <Version>0.4.5</Version>
+    <Version>0.4.6</Version>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <Description></Description>
-    <PackageReleaseNotes>To H.ProxyFactory.Pipes 0.7.4.</PackageReleaseNotes>
+    <PackageReleaseNotes>Added new process runtimes.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

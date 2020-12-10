@@ -1,6 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using H.IO;
 using H.IO.Utilities;
 
@@ -16,13 +16,19 @@ namespace H.Containers
 
         #region Methods
 
-        public static string Unpack(this TempDirectory tempDirectory)
+        public static string Unpack(this TempDirectory tempDirectory, ProcessRuntime runtime)
         {
-            var names = ResourcesUtilities.GetResourcesNames().ToList();
-            var firstName = names.First();
-            var zipBytes = ResourcesUtilities.ReadFileAsBytes(firstName);
+            var name = runtime switch
+            {
+                ProcessRuntime.Net461 => "net4.6.1.zip",
+                ProcessRuntime.Net48 => "net4.8.zip",
+                ProcessRuntime.NetCore31 => "netcoreapp3.1.zip",
+                ProcessRuntime.Net50 => "net5.0.zip",
+                _ => throw new ArgumentException($"Runtime is not supported: {runtime}"),
+            };
+            var zipBytes = ResourcesUtilities.ReadFileAsBytes(name);
 
-            var zipPath = Path.Combine(tempDirectory.Folder, firstName);
+            var zipPath = Path.Combine(tempDirectory.Folder, name);
             File.WriteAllBytes(zipPath, zipBytes);
 
             try
