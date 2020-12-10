@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <Version>0.4.6</Version>
+    <Version>0.4.7</Version>
     <Description>
       Features:
       - You can run any object in another process in several lines
@@ -27,9 +27,13 @@
     <ProjectReference Include="..\H.IO\H.IO.csproj" />
   </ItemGroup>
 
-  <Target Name="CopyApplication" BeforeTargets="PreBuildEvent">
-    <RemoveDir Directories="$(OutDir)Application" />
-    <MakeDir Directories="$(OutDir)Application" />
+  <Target Name="CopyApplication" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ApplicationDir>$(ProjectDir)bin\$(Configuration)\$(TargetFramework)\Application\</ApplicationDir>
+    </PropertyGroup>
+
+    <RemoveDir Directories="$(ApplicationDir)" />
+    <MakeDir Directories="$(ApplicationDir)" />
 
     <ItemGroup>
       <Targets Include="net4.6.1" />
@@ -38,11 +42,13 @@
       <Targets Include="net5.0" />
     </ItemGroup>
 
-    <ZipDirectory SourceDirectory="..\H.Containers.Process.Application\bin\$(Configuration)\%(Targets.Identity)" DestinationFile="$(OutDir)Application\%(Targets.Identity).zip" Overwrite="True" />
+    <ZipDirectory SourceDirectory="..\H.Containers.Process.Application\bin\$(Configuration)\%(Targets.Identity)" DestinationFile="$(ApplicationDir)%(Targets.Identity).zip" Overwrite="True" />
 
     <ItemGroup>
-      <EmbeddedResource Include="$(OutDir)Application\*.zip" />
+      <EmbeddedResource Include="$(ApplicationDir)*.zip" />
     </ItemGroup>
+
+    <Message Importance="High" Text="Embedded %(EmbeddedResource.FullPath)" />
   </Target>
 
 </Project>
