@@ -195,7 +195,7 @@ namespace H.Containers
                 return;
             }
 
-            await StopAsync();
+            await StopAsync().ConfigureAwait(false);
         }
 
         #endregion

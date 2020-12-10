@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net4.6.1</TargetFrameworks>
     <RootNamespace>H.Containers</RootNamespace>
     <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <Version>0.4.4</Version>
+    <Version>0.4.5</Version>
     <Description>
       Features:
       - You can run any object in another process in several lines
@@ -18,7 +18,7 @@
       - Currently installed .Net 5.0 is required to start the process
     </Description>
     <PackageTags>run code in separate process, process, containers, proxy objects, direct proxy</PackageTags>
-    <PackageReleaseNotes>To H.ProxyFactory.Pipes 0.7.3.</PackageReleaseNotes>
+    <PackageReleaseNotes>To H.ProxyFactory.Pipes 0.7.4.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

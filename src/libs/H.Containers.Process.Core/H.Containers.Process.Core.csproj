@@ -1,19 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net4.6.1</TargetFrameworks>
     <RootNamespace>H.Containers</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <Version>0.4.4</Version>
+    <Version>0.4.5</Version>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <Description></Description>
-    <PackageReleaseNotes>To H.ProxyFactory.Pipes 0.7.3.</PackageReleaseNotes>
+    <PackageReleaseNotes>To H.ProxyFactory.Pipes 0.7.4.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="H.ProxyFactory.Pipes" Version="0.7.3" />
+    <PackageReference Include="H.ProxyFactory.Pipes" Version="0.7.4" />
   </ItemGroup>
 
 </Project>

@@ -47,7 +47,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Analyzers">
-    <NoWarn>$(NoWarn);CA1031</NoWarn>
+    <NoWarn>$(NoWarn);CA1031;CA1063;CA1816</NoWarn>
   </PropertyGroup>
 
   <ItemGroup Label="Analyzers">
