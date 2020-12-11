@@ -27,7 +27,7 @@ namespace H.Containers
                 ProcessRuntime.Net50 => "net5.0.zip",
                 _ => throw new ArgumentException($"Runtime is not supported: {runtime}"),
             };
-            var zipBytes = ResourcesUtilities.ReadFileAsBytes(name, Assembly.GetExecutingAssembly());
+            var zipBytes = ResourcesUtilities.ReadFileAsBytes(name);
 
             var zipPath = Path.Combine(tempDirectory.Folder, name);
             File.WriteAllBytes(zipPath, zipBytes);
